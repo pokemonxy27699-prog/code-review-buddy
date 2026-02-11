@@ -105,11 +105,23 @@ export const mockAssetSummaries = generateAssetSummaries(mockTrades);
 
 export function getKPIs(trades: Trade[]) {
   const totalPnl = trades.reduce((s, t) => s + t.pnl, 0);
-  const wins = trades.filter((t) => t.pnl > 0).length;
-  const winRate = trades.length > 0 ? (wins / trades.length) * 100 : 0;
+  const wins = trades.filter((t) => t.pnl > 0);
+  const losses = trades.filter((t) => t.pnl < 0);
+  const winRate = trades.length > 0 ? (wins.length / trades.length) * 100 : 0;
   const best = trades.reduce((best, t) => (t.pnl > best.pnl ? t : best), trades[0]);
   const worst = trades.reduce((worst, t) => (t.pnl < worst.pnl ? t : worst), trades[0]);
   const avgSize = trades.reduce((s, t) => s + t.price * t.quantity, 0) / (trades.length || 1);
+
+  const grossProfit = wins.reduce((s, t) => s + t.pnl, 0);
+  const grossLoss = Math.abs(losses.reduce((s, t) => s + t.pnl, 0));
+  const profitFactor = grossLoss > 0 ? +(grossProfit / grossLoss).toFixed(2) : grossProfit > 0 ? Infinity : 0;
+
+  const avgReturn = trades.length > 0 ? totalPnl / trades.length : 0;
+  const stdDev = trades.length > 1
+    ? Math.sqrt(trades.reduce((s, t) => s + (t.pnl - avgReturn) ** 2, 0) / (trades.length - 1))
+    : 0;
+  const sharpeRatio = stdDev > 0 ? +((avgReturn / stdDev) * Math.sqrt(252)).toFixed(2) : 0;
+
   return {
     totalPnl: +totalPnl.toFixed(2),
     winRate: +winRate.toFixed(1),
@@ -117,6 +129,8 @@ export function getKPIs(trades: Trade[]) {
     bestTrade: best ? +best.pnl.toFixed(2) : 0,
     worstTrade: worst ? +worst.pnl.toFixed(2) : 0,
     avgTradeSize: +avgSize.toFixed(2),
+    profitFactor,
+    sharpeRatio,
   };
 }
 
@@ -138,4 +152,30 @@ export function getEquityCurve(trades: Trade[]) {
     cumulative += t.pnl;
     return { date: t.date.slice(0, 10), equity: +cumulative.toFixed(2) };
   });
+}
+
+export function getDrawdownCurve(trades: Trade[]) {
+  const equity = getEquityCurve(trades);
+  let peak = -Infinity;
+  return equity.map((e) => {
+    if (e.equity > peak) peak = e.equity;
+    const drawdown = peak > 0 ? +((e.equity - peak) / peak * 100).toFixed(2) : 0;
+    return { date: e.date, drawdown };
+  });
+}
+
+export function getMaxDrawdown(trades: Trade[]) {
+  const dd = getDrawdownCurve(trades);
+  return dd.length > 0 ? Math.min(...dd.map((d) => d.drawdown)) : 0;
+}
+
+export function getCalendarHeatmap(trades: Trade[]) {
+  const daily: Record<string, number> = {};
+  trades.forEach((t) => {
+    const day = t.date.slice(0, 10);
+    daily[day] = (daily[day] || 0) + t.pnl;
+  });
+  return Object.entries(daily)
+    .map(([date, pnl]) => ({ date, pnl: +pnl.toFixed(2) }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }

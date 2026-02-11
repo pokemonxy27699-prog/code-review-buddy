@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, List, PieChart, ArrowUpDown, RefreshCw } from "lucide-react";
+import { LayoutDashboard, List, PieChart, ArrowUpDown, RefreshCw, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
@@ -7,6 +7,7 @@ const navItems = [
   { to: "/trades", icon: List, label: "Trade Log" },
   { to: "/assets", icon: PieChart, label: "Assets" },
   { to: "/capital", icon: ArrowUpDown, label: "Capital Flows" },
+  { to: "/analytics", icon: CalendarDays, label: "Analytics" },
 ];
 
 export default function AppLayout() {

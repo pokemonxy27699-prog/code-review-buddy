@@ -1,20 +1,23 @@
-import { TrendingUp, TrendingDown, Activity, Target, BarChart3, DollarSign } from "lucide-react";
-import { mockTrades, getKPIs, getDailyPnl, getEquityCurve } from "@/lib/mock-data";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TrendingUp, TrendingDown, Activity, Target, BarChart3, DollarSign, Scale, Gauge } from "lucide-react";
+import { mockTrades, getKPIs, getDailyPnl, getEquityCurve, getDrawdownCurve, getMaxDrawdown } from "@/lib/mock-data";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Line, LineChart, Bar, BarChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from "recharts";
+import { Line, LineChart, Bar, BarChart, Area, AreaChart, XAxis, YAxis, CartesianGrid, Cell } from "recharts";
 
 const kpis = getKPIs(mockTrades);
 const dailyPnl = getDailyPnl(mockTrades);
 const equityCurve = getEquityCurve(mockTrades);
+const drawdownCurve = getDrawdownCurve(mockTrades);
+const maxDrawdown = getMaxDrawdown(mockTrades);
 
 const kpiCards = [
   { label: "Total PnL", value: kpis.totalPnl, prefix: "$", icon: DollarSign, trend: kpis.totalPnl >= 0 },
   { label: "Win Rate", value: kpis.winRate, suffix: "%", icon: Target, trend: kpis.winRate >= 50 },
+  { label: "Profit Factor", value: kpis.profitFactor, icon: Scale, trend: kpis.profitFactor >= 1 },
+  { label: "Sharpe Ratio", value: kpis.sharpeRatio, icon: Gauge, trend: kpis.sharpeRatio >= 0 },
   { label: "Total Trades", value: kpis.totalTrades, icon: Activity, trend: true },
   { label: "Best Trade", value: kpis.bestTrade, prefix: "$", icon: TrendingUp, trend: true },
   { label: "Worst Trade", value: kpis.worstTrade, prefix: "$", icon: TrendingDown, trend: false },
-  { label: "Avg Trade Size", value: kpis.avgTradeSize, prefix: "$", icon: BarChart3, trend: true },
+  { label: "Max Drawdown", value: maxDrawdown, suffix: "%", icon: BarChart3, trend: false },
 ];
 
 export default function Dashboard() {
@@ -26,7 +29,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-4">
         {kpiCards.map((kpi) => (
           <div key={kpi.label} className="glass-card p-4">
             <div className="flex items-center justify-between">
@@ -73,6 +76,26 @@ export default function Dashboard() {
                 ))}
               </Bar>
             </BarChart>
+          </ChartContainer>
+        </div>
+
+        {/* Drawdown Chart */}
+        <div className="glass-card p-6 lg:col-span-2">
+          <h3 className="mb-4 text-sm font-semibold">Drawdown</h3>
+          <ChartContainer config={{ drawdown: { label: "Drawdown %", color: "hsl(var(--destructive))" } }} className="h-[220px] w-full">
+            <AreaChart data={drawdownCurve}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(225 15% 20%)" />
+              <XAxis dataKey="date" tick={{ fill: "hsl(215 15% 55%)", fontSize: 10 }} tickLine={false} axisLine={false} />
+              <YAxis tick={{ fill: "hsl(215 15% 55%)", fontSize: 10 }} tickLine={false} axisLine={false} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <defs>
+                <linearGradient id="drawdownGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(var(--destructive))" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="hsl(var(--destructive))" stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
+              <Area type="monotone" dataKey="drawdown" stroke="hsl(var(--destructive))" fill="url(#drawdownGrad)" strokeWidth={2} dot={false} />
+            </AreaChart>
           </ChartContainer>
         </div>
       </div>
