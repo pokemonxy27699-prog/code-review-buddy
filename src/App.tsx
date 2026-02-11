@@ -9,6 +9,8 @@ import TradeLog from "@/pages/TradeLog";
 import Assets from "@/pages/Assets";
 import CapitalFlows from "@/pages/CapitalFlows";
 import Analytics from "@/pages/Analytics";
+import Reports from "@/pages/Reports";
+import TradingPlans from "@/pages/TradingPlans";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +28,8 @@ const App = () => (
             <Route path="/assets" element={<Assets />} />
             <Route path="/capital" element={<CapitalFlows />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/plans" element={<TradingPlans />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
