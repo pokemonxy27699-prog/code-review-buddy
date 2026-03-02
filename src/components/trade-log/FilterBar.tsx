@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,7 +13,7 @@ import {
   loadTagCategories,
   ColumnKey,
 } from "@/lib/trade-store";
-import { Search, X, Bookmark, SlidersHorizontal } from "lucide-react";
+import { Search, X, Bookmark, RotateCcw } from "lucide-react";
 import { Trade } from "@/lib/mock-data";
 
 interface FilterBarProps {
@@ -23,13 +23,28 @@ interface FilterBarProps {
   visibleColumns: ColumnKey[];
 }
 
+function countActiveFilters(f: TradeFilters): number {
+  let count = 0;
+  if (f.search) count++;
+  if (f.side !== "all") count++;
+  if (f.pnl !== "all") count++;
+  if (f.setup !== "all") count++;
+  if (f.emotion !== "all") count++;
+  if (f.mistake !== "all") count++;
+  if (f.symbol !== "all") count++;
+  if (f.dateFrom) count++;
+  if (f.dateTo) count++;
+  return count;
+}
+
 export default function FilterBar({ filters, onChange, trades }: FilterBarProps) {
   const [savedViews, setSavedViews] = useState<SavedView[]>(loadSavedViews);
   const [viewName, setViewName] = useState("");
   const cats = loadTagCategories();
 
-  const symbols = [...new Set(trades.map((t) => t.instrument))].sort();
+  const symbols = useMemo(() => [...new Set(trades.map((t) => t.instrument))].sort(), [trades]);
   const isDefault = JSON.stringify(filters) === JSON.stringify(DEFAULT_FILTERS);
+  const activeCount = countActiveFilters(filters);
 
   const set = (patch: Partial<TradeFilters>) => onChange({ ...filters, ...patch });
 
@@ -47,9 +62,7 @@ export default function FilterBar({ filters, onChange, trades }: FilterBarProps)
     setViewName("");
   };
 
-  const loadView = (v: SavedView) => {
-    onChange(v.filters);
-  };
+  const loadView = (v: SavedView) => onChange(v.filters);
 
   const deleteView = (id: string) => {
     const next = savedViews.filter((v) => v.id !== id);
@@ -72,39 +85,21 @@ export default function FilterBar({ filters, onChange, trades }: FilterBarProps)
         </div>
 
         {/* Date range */}
-        <Input
-          type="date"
-          value={filters.dateFrom}
-          onChange={(e) => set({ dateFrom: e.target.value })}
-          className="h-8 w-32 text-xs bg-card/60 border-border/50"
-          placeholder="From"
-        />
-        <Input
-          type="date"
-          value={filters.dateTo}
-          onChange={(e) => set({ dateTo: e.target.value })}
-          className="h-8 w-32 text-xs bg-card/60 border-border/50"
-          placeholder="To"
-        />
+        <Input type="date" value={filters.dateFrom} onChange={(e) => set({ dateFrom: e.target.value })} className="h-8 w-32 text-xs bg-card/60 border-border/50" />
+        <Input type="date" value={filters.dateTo} onChange={(e) => set({ dateTo: e.target.value })} className="h-8 w-32 text-xs bg-card/60 border-border/50" />
 
         {/* Symbol */}
         <Select value={filters.symbol} onValueChange={(v) => set({ symbol: v })}>
-          <SelectTrigger className="h-8 w-28 text-xs bg-card/60 border-border/50">
-            <SelectValue placeholder="Symbol" />
-          </SelectTrigger>
+          <SelectTrigger className="h-8 w-28 text-xs bg-card/60 border-border/50"><SelectValue placeholder="Symbol" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Symbols</SelectItem>
-            {symbols.map((s) => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
-            ))}
+            {symbols.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
 
         {/* Side */}
         <Select value={filters.side} onValueChange={(v) => set({ side: v })}>
-          <SelectTrigger className="h-8 w-24 text-xs bg-card/60 border-border/50">
-            <SelectValue />
-          </SelectTrigger>
+          <SelectTrigger className="h-8 w-24 text-xs bg-card/60 border-border/50"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Sides</SelectItem>
             <SelectItem value="BUY">Buy</SelectItem>
@@ -114,35 +109,25 @@ export default function FilterBar({ filters, onChange, trades }: FilterBarProps)
 
         {/* Setup */}
         <Select value={filters.setup} onValueChange={(v) => set({ setup: v })}>
-          <SelectTrigger className="h-8 w-28 text-xs bg-card/60 border-border/50">
-            <SelectValue placeholder="Setup" />
-          </SelectTrigger>
+          <SelectTrigger className="h-8 w-28 text-xs bg-card/60 border-border/50"><SelectValue placeholder="Setup" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Setups</SelectItem>
-            {cats.setups.map((s) => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
-            ))}
+            {cats.setups.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
 
         {/* Mistake */}
         <Select value={filters.mistake} onValueChange={(v) => set({ mistake: v })}>
-          <SelectTrigger className="h-8 w-28 text-xs bg-card/60 border-border/50">
-            <SelectValue placeholder="Mistake" />
-          </SelectTrigger>
+          <SelectTrigger className="h-8 w-28 text-xs bg-card/60 border-border/50"><SelectValue placeholder="Mistake" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Mistakes</SelectItem>
-            {cats.mistakes.map((m) => (
-              <SelectItem key={m} value={m}>{m}</SelectItem>
-            ))}
+            {cats.mistakes.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
           </SelectContent>
         </Select>
 
         {/* P&L */}
         <Select value={filters.pnl} onValueChange={(v) => set({ pnl: v })}>
-          <SelectTrigger className="h-8 w-24 text-xs bg-card/60 border-border/50">
-            <SelectValue />
-          </SelectTrigger>
+          <SelectTrigger className="h-8 w-24 text-xs bg-card/60 border-border/50"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All P&L</SelectItem>
             <SelectItem value="profit">Profit</SelectItem>
@@ -150,31 +135,30 @@ export default function FilterBar({ filters, onChange, trades }: FilterBarProps)
           </SelectContent>
         </Select>
 
-        {/* Clear */}
+        {/* Active filter count + Reset */}
         {!isDefault && (
-          <Button variant="ghost" size="sm" className="h-8 text-xs gap-1 text-muted-foreground" onClick={() => onChange(DEFAULT_FILTERS)}>
-            <X className="h-3 w-3" /> Clear
+          <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => onChange(DEFAULT_FILTERS)}>
+            <RotateCcw className="h-3 w-3" />
+            Reset
+            <Badge variant="secondary" className="h-4 px-1 text-[10px] font-mono">{activeCount}</Badge>
           </Button>
         )}
 
-        {/* Save View */}
+        {/* Saved Views */}
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="h-8 text-xs gap-1 border-border/50">
               <Bookmark className="h-3 w-3" /> Views
+              {savedViews.length > 0 && <Badge variant="secondary" className="h-4 px-1 text-[10px] font-mono ml-0.5">{savedViews.length}</Badge>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-64 p-3 bg-card border-border/50" align="end">
             <p className="text-xs font-medium mb-2">Saved Views</p>
-            {savedViews.length === 0 && (
-              <p className="text-xs text-muted-foreground mb-2">No saved views yet.</p>
-            )}
+            {savedViews.length === 0 && <p className="text-xs text-muted-foreground mb-2">No saved views yet.</p>}
             <div className="space-y-1 mb-3 max-h-40 overflow-y-auto">
               {savedViews.map((v) => (
                 <div key={v.id} className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" className="h-7 flex-1 justify-start text-xs" onClick={() => loadView(v)}>
-                    {v.name}
-                  </Button>
+                  <Button variant="ghost" size="sm" className="h-7 flex-1 justify-start text-xs" onClick={() => loadView(v)}>{v.name}</Button>
                   <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive" onClick={() => deleteView(v.id)}>
                     <X className="h-3 w-3" />
                   </Button>
@@ -182,16 +166,8 @@ export default function FilterBar({ filters, onChange, trades }: FilterBarProps)
               ))}
             </div>
             <div className="flex gap-1">
-              <Input
-                value={viewName}
-                onChange={(e) => setViewName(e.target.value)}
-                placeholder="View name..."
-                className="h-7 text-xs bg-background"
-                onKeyDown={(e) => e.key === "Enter" && handleSaveView()}
-              />
-              <Button size="sm" className="h-7 text-xs" onClick={handleSaveView}>
-                Save
-              </Button>
+              <Input value={viewName} onChange={(e) => setViewName(e.target.value)} placeholder="View name..." className="h-7 text-xs bg-background" onKeyDown={(e) => e.key === "Enter" && handleSaveView()} />
+              <Button size="sm" className="h-7 text-xs" onClick={handleSaveView}>Save</Button>
             </div>
           </PopoverContent>
         </Popover>
