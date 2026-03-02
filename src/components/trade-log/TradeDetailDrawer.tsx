@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { Trade } from "@/lib/mock-data";
-import { updateTrade, loadTagCategories } from "@/lib/trade-store";
+import { loadTagCategories } from "@/lib/trade-store";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Star, Clock, X, Plus } from "lucide-react";
+import { Star, X, Plus } from "lucide-react";
 
 function StarRatingInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
@@ -24,10 +24,10 @@ function StarRatingInput({ value, onChange }: { value: number; onChange: (v: num
 interface Props {
   trade: Trade | null;
   onClose: () => void;
-  onUpdate: (trades: Trade[]) => void;
+  onSave: (id: string, patch: Partial<Trade>) => void;
 }
 
-export default function TradeDetailDrawer({ trade, onClose, onUpdate }: Props) {
+export default function TradeDetailDrawer({ trade, onClose, onSave }: Props) {
   const cats = loadTagCategories();
   const [notes, setNotes] = useState("");
   const [rating, setRating] = useState(0);
@@ -51,13 +51,12 @@ export default function TradeDetailDrawer({ trade, onClose, onUpdate }: Props) {
     const activeMistakes = Object.entries(mistakes)
       .filter(([, v]) => v)
       .map(([k]) => k);
-    const updated = updateTrade(trade.id, {
+    onSave(trade.id, {
       notes,
       rating,
       tags,
       mistake: (activeMistakes[0] as Trade["mistake"]) || "None",
     });
-    onUpdate(updated);
   };
 
   const addTag = () => {
@@ -121,7 +120,7 @@ export default function TradeDetailDrawer({ trade, onClose, onUpdate }: Props) {
           {/* Rating */}
           <div>
             <p className="text-xs text-muted-foreground mb-1.5">Trade Rating</p>
-            <StarRatingInput value={rating} onChange={(v) => { setRating(v); }} />
+            <StarRatingInput value={rating} onChange={setRating} />
           </div>
 
           {/* Tags */}

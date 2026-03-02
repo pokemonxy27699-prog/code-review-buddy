@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboard, List, PieChart, ArrowUpDown, CalendarDays, BarChart3, BookOpen, RefreshCw, Menu } from "lucide-react";
+import { LayoutDashboard, List, PieChart, ArrowUpDown, CalendarDays, BarChart3, BookOpen, RefreshCw, Menu, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -13,6 +13,7 @@ const navItems = [
   { to: "/analytics", icon: CalendarDays, label: "Analytics" },
   { to: "/reports", icon: BarChart3, label: "Reports" },
   { to: "/plans", icon: BookOpen, label: "Trading Plans" },
+  { to: "/settings", icon: Settings, label: "Settings" },
 ];
 
 function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
