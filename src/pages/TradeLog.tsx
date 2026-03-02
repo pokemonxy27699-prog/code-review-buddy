@@ -1,23 +1,19 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { Trade } from "@/lib/mock-data";
 import {
-  loadTrades,
   loadVisibleColumns,
-  applyFilters,
-  exportTradesToCsv,
-  TradeFilters,
-  DEFAULT_FILTERS,
   ColumnKey,
 } from "@/lib/trade-store";
+import { useTrades, useFilters, useUpdateTrade } from "@/store/trades";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpDown, Star, Download, Upload, Clock } from "lucide-react";
+import { ArrowUpDown, Star, Download, Clock, Loader2, AlertCircle, Inbox } from "lucide-react";
 import FilterBar from "@/components/trade-log/FilterBar";
 import ColumnPicker from "@/components/trade-log/ColumnPicker";
 import TradeDetailDrawer from "@/components/trade-log/TradeDetailDrawer";
-import CsvImportDialog from "@/components/trade-log/CsvImportDialog";
+import { exportTradesToCsv } from "@/lib/trade-store";
 
 type SortKey = keyof Trade;
 
@@ -32,17 +28,17 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export default function TradeLog() {
-  const [trades, setTrades] = useState<Trade[]>(loadTrades);
-  const [filters, setFilters] = useState<TradeFilters>(DEFAULT_FILTERS);
+  const { filters, setFilters } = useFilters();
+  const { data: trades = [], isLoading, isError, error } = useTrades(filters);
+  const updateTrade = useUpdateTrade();
   const [visibleCols, setVisibleCols] = useState<ColumnKey[]>(loadVisibleColumns);
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortAsc, setSortAsc] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [detailTrade, setDetailTrade] = useState<Trade | null>(null);
-  const [csvOpen, setCsvOpen] = useState(false);
 
-  const filtered = useMemo(() => {
-    let result = applyFilters(trades, filters);
+  const sorted = useMemo(() => {
+    const result = [...trades];
     result.sort((a, b) => {
       const aVal = a[sortKey];
       const bVal = b[sortKey];
@@ -51,7 +47,7 @@ export default function TradeLog() {
       return sortAsc ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
     });
     return result;
-  }, [trades, filters, sortKey, sortAsc]);
+  }, [trades, sortKey, sortAsc]);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);
@@ -67,8 +63,8 @@ export default function TradeLog() {
   };
 
   const toggleAll = () => {
-    if (selected.size === filtered.length) setSelected(new Set());
-    else setSelected(new Set(filtered.map((t) => t.id)));
+    if (selected.size === sorted.length) setSelected(new Set());
+    else setSelected(new Set(sorted.map((t) => t.id)));
   };
 
   const SortHeader = ({ label, sortField }: { label: string; sortField: SortKey }) => (
@@ -77,7 +73,6 @@ export default function TradeLog() {
     </button>
   );
 
-  // Cell renderer per column
   const renderCell = (t: Trade, col: ColumnKey) => {
     switch (col) {
       case "date":
@@ -136,27 +131,23 @@ export default function TradeLog() {
 
   return (
     <div className="space-y-0">
-      {/* Filter bar */}
       <FilterBar filters={filters} onChange={setFilters} trades={trades} visibleColumns={visibleCols} />
 
       {/* Toolbar */}
       <div className="flex items-center justify-between py-3 gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-bold tracking-tight">Trade Log</h1>
-          <span className="text-xs text-muted-foreground">{filtered.length} trades</span>
+          <span className="text-xs text-muted-foreground">{sorted.length} trades</span>
           {selected.size > 0 && (
             <Badge variant="secondary" className="text-[10px]">{selected.size} selected</Badge>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="h-8 text-xs gap-1 border-border/50" onClick={() => setCsvOpen(true)}>
-            <Upload className="h-3 w-3" /> Import
-          </Button>
           <Button
             variant="outline"
             size="sm"
             className="h-8 text-xs gap-1 border-border/50"
-            onClick={() => exportTradesToCsv(selected.size > 0 ? filtered.filter((t) => selected.has(t.id)) : filtered)}
+            onClick={() => exportTradesToCsv(selected.size > 0 ? sorted.filter((t) => selected.has(t.id)) : sorted)}
           >
             <Download className="h-3 w-3" /> Export{selected.size > 0 ? ` (${selected.size})` : ""}
           </Button>
@@ -164,61 +155,88 @@ export default function TradeLog() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="glass-card overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-border/50 hover:bg-transparent">
-              <TableHead className="w-10">
-                <Checkbox
-                  checked={filtered.length > 0 && selected.size === filtered.length}
-                  onCheckedChange={toggleAll}
-                  className="h-3.5 w-3.5"
-                />
-              </TableHead>
-              {visibleCols.map((col) => (
-                <TableHead key={col} className={isRightAligned(col) ? "text-right" : ""}>
-                  {["date", "instrument", "pnl", "rMultiple", "price", "quantity"].includes(col)
-                    ? <SortHeader label={col === "rMultiple" ? "R-Mult" : col === "pnl" ? "P&L" : col.charAt(0).toUpperCase() + col.slice(1)} sortField={col as SortKey} />
-                    : <span className="text-xs">{col === "holdTime" ? "Hold" : col.charAt(0).toUpperCase() + col.slice(1)}</span>
-                  }
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.slice(0, 100).map((t) => (
-              <TableRow
-                key={t.id}
-                className={`cursor-pointer border-border/30 ${selected.has(t.id) ? "bg-primary/5" : ""} ${t.pnl >= 0 ? "hover:bg-success/5" : "hover:bg-destructive/5"}`}
-              >
-                <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
+      {/* States */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-20 text-muted-foreground gap-2">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span className="text-sm">Loading trades…</span>
+        </div>
+      )}
+
+      {isError && (
+        <div className="flex items-center justify-center py-20 gap-2 text-destructive">
+          <AlertCircle className="h-5 w-5" />
+          <span className="text-sm">{(error as Error)?.message || "Failed to load trades"}</span>
+        </div>
+      )}
+
+      {!isLoading && !isError && sorted.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-2">
+          <Inbox className="h-8 w-8" />
+          <p className="text-sm font-medium">No trades found</p>
+          <p className="text-xs">Adjust your filters or add a trade to get started.</p>
+        </div>
+      )}
+
+      {!isLoading && !isError && sorted.length > 0 && (
+        <div className="glass-card overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-border/50 hover:bg-transparent">
+                <TableHead className="w-10">
                   <Checkbox
-                    checked={selected.has(t.id)}
-                    onCheckedChange={() => toggleSelect(t.id)}
+                    checked={sorted.length > 0 && selected.size === sorted.length}
+                    onCheckedChange={toggleAll}
                     className="h-3.5 w-3.5"
                   />
-                </TableCell>
+                </TableHead>
                 {visibleCols.map((col) => (
-                  <TableCell
-                    key={col}
-                    className={isRightAligned(col) ? "text-right" : ""}
-                    onClick={() => setDetailTrade(t)}
-                  >
-                    {renderCell(t, col)}
-                  </TableCell>
+                  <TableHead key={col} className={isRightAligned(col) ? "text-right" : ""}>
+                    {["date", "instrument", "pnl", "rMultiple", "price", "quantity"].includes(col)
+                      ? <SortHeader label={col === "rMultiple" ? "R-Mult" : col === "pnl" ? "P&L" : col.charAt(0).toUpperCase() + col.slice(1)} sortField={col as SortKey} />
+                      : <span className="text-xs">{col === "holdTime" ? "Hold" : col.charAt(0).toUpperCase() + col.slice(1)}</span>
+                    }
+                  </TableHead>
                 ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {sorted.slice(0, 100).map((t) => (
+                <TableRow
+                  key={t.id}
+                  className={`cursor-pointer border-border/30 ${selected.has(t.id) ? "bg-primary/5" : ""} ${t.pnl >= 0 ? "hover:bg-success/5" : "hover:bg-destructive/5"}`}
+                >
+                  <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selected.has(t.id)}
+                      onCheckedChange={() => toggleSelect(t.id)}
+                      className="h-3.5 w-3.5"
+                    />
+                  </TableCell>
+                  {visibleCols.map((col) => (
+                    <TableCell
+                      key={col}
+                      className={isRightAligned(col) ? "text-right" : ""}
+                      onClick={() => setDetailTrade(t)}
+                    >
+                      {renderCell(t, col)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
-      {/* Detail drawer */}
-      <TradeDetailDrawer trade={detailTrade} onClose={() => setDetailTrade(null)} onUpdate={setTrades} />
-
-      {/* CSV Import */}
-      <CsvImportDialog open={csvOpen} onClose={() => setCsvOpen(false)} />
+      <TradeDetailDrawer
+        trade={detailTrade}
+        onClose={() => setDetailTrade(null)}
+        onSave={(id, patch) => {
+          updateTrade.mutate({ id, patch });
+          setDetailTrade(null);
+        }}
+      />
     </div>
   );
 }
