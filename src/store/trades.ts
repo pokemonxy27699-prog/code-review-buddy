@@ -21,20 +21,67 @@ import {
   updateTagsApi,
   CreateTradePayload,
 } from "@/services/api";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
+
+// ── URL ↔ Filter serialization ──
+const FILTER_PARAMS: Record<string, keyof TradeFilters> = {
+  from: "dateFrom",
+  to: "dateTo",
+  q: "search",
+  symbol: "symbol",
+  side: "side",
+  setup: "setup",
+  emotion: "emotion",
+  mistake: "mistake",
+  pnl: "pnl",
+  account: "account",
+};
+
+function filtersToParams(f: TradeFilters): URLSearchParams {
+  const p = new URLSearchParams();
+  for (const [param, key] of Object.entries(FILTER_PARAMS)) {
+    const val = f[key];
+    const def = DEFAULT_FILTERS[key];
+    if (val && val !== def) p.set(param, val);
+  }
+  return p;
+}
+
+function paramsToFilters(p: URLSearchParams): Partial<TradeFilters> {
+  const partial: Partial<TradeFilters> = {};
+  for (const [param, key] of Object.entries(FILTER_PARAMS)) {
+    const val = p.get(param);
+    if (val) (partial as any)[key] = val;
+  }
+  return partial;
+}
 
 // ── Global filter state (simple module-level singleton) ──
 let _filters: TradeFilters = { ...DEFAULT_FILTERS };
 let _listeners: Array<() => void> = [];
+let _initialized = false;
 
 function notifyListeners() {
   _listeners.forEach((l) => l());
 }
 
+export function setGlobalFilters(f: TradeFilters) {
+  _filters = f;
+  notifyListeners();
+}
+
+export function getGlobalFilters() {
+  return _filters;
+}
+
 export function useFilters() {
   const [, rerender] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const subscribe = useCallback(() => {
+  // Subscribe to global state
+  useEffect(() => {
     const cb = () => rerender((n) => n + 1);
     _listeners.push(cb);
     return () => {
@@ -42,11 +89,47 @@ export function useFilters() {
     };
   }, []);
 
-  // Subscribe on mount
-  useState(() => {
-    const unsub = subscribe();
-    return unsub;
-  });
+  // Hydrate from URL on first mount (only once globally)
+  useEffect(() => {
+    if (_initialized) return;
+    _initialized = true;
+    const fromUrl = paramsToFilters(searchParams);
+    if (Object.keys(fromUrl).length > 0) {
+      _filters = { ...DEFAULT_FILTERS, ...fromUrl };
+      notifyListeners();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync filters → URL (debounced)
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const newParams = filtersToParams(_filters);
+      const currentStr = searchParams.toString();
+      const newStr = newParams.toString();
+      if (currentStr !== newStr) {
+        setSearchParams(newParams, { replace: true });
+      }
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [_filters, setSearchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Listen to popstate (back/forward) to restore filters from URL
+  useEffect(() => {
+    const handler = () => {
+      const params = new URLSearchParams(window.location.search);
+      const fromUrl = paramsToFilters(params);
+      const restored = { ...DEFAULT_FILTERS, ...fromUrl };
+      if (JSON.stringify(restored) !== JSON.stringify(_filters)) {
+        _filters = restored;
+        notifyListeners();
+      }
+    };
+    window.addEventListener("popstate", handler);
+    return () => window.removeEventListener("popstate", handler);
+  }, []);
 
   const setFilters = useCallback((f: TradeFilters) => {
     _filters = f;
@@ -54,6 +137,27 @@ export function useFilters() {
   }, []);
 
   return { filters: _filters, setFilters };
+}
+
+// ── Date preset helper ──
+export type DatePreset = "7D" | "30D" | "90D" | "YTD" | "ALL";
+
+export function getDatePresetRange(preset: DatePreset): { dateFrom: string; dateTo: string } {
+  const now = new Date();
+  const to = now.toISOString().slice(0, 10);
+  if (preset === "ALL") return { dateFrom: "", dateTo: "" };
+  if (preset === "YTD") return { dateFrom: `${now.getFullYear()}-01-01`, dateTo: to };
+  const days = preset === "7D" ? 7 : preset === "30D" ? 30 : 90;
+  const from = new Date(now.getTime() - days * 86400000);
+  return { dateFrom: from.toISOString().slice(0, 10), dateTo: to };
+}
+
+export function getActivePreset(filters: TradeFilters): DatePreset | null {
+  for (const p of ["7D", "30D", "90D", "YTD", "ALL"] as DatePreset[]) {
+    const range = getDatePresetRange(p);
+    if (filters.dateFrom === range.dateFrom && filters.dateTo === range.dateTo) return p;
+  }
+  return null;
 }
 
 // ── Trades hook ──
@@ -66,7 +170,6 @@ export function useTrades(filters: TradeFilters) {
       if (apiMode) {
         return apiGetTrades(filters);
       }
-      // Mock fallback
       const all = loadTrades();
       return applyFilters(all, filters);
     },
@@ -101,7 +204,6 @@ export function useCreateTrade() {
       if (isApiConfigured()) {
         return apiCreateTrade(payload);
       }
-      // Mock: add to localStorage
       const trades = loadTrades();
       const newTrade: Trade = { ...payload, id: `t-${Date.now()}` };
       trades.unshift(newTrade);

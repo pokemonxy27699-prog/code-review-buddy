@@ -1,9 +1,14 @@
 import { useState, useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboard, List, PieChart, ArrowUpDown, CalendarDays, BarChart3, BookOpen, RefreshCw, Menu, Settings } from "lucide-react";
+import { LayoutDashboard, List, PieChart, ArrowUpDown, CalendarDays, BarChart3, BookOpen, RefreshCw, Menu, Settings, Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { useFilters, getActivePreset, getDatePresetRange, DatePreset } from "@/store/trades";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -15,6 +20,87 @@ const navItems = [
   { to: "/plans", icon: BookOpen, label: "Trading Plans" },
   { to: "/settings", icon: Settings, label: "Settings" },
 ];
+
+const DATE_PRESETS: DatePreset[] = ["7D", "30D", "90D", "YTD", "ALL"];
+
+function DatePresetBar() {
+  const { filters, setFilters } = useFilters();
+  const activePreset = getActivePreset(filters);
+  const [customOpen, setCustomOpen] = useState(false);
+
+  const fromDate = filters.dateFrom ? new Date(filters.dateFrom + "T00:00:00") : undefined;
+  const toDate = filters.dateTo ? new Date(filters.dateTo + "T00:00:00") : undefined;
+
+  const handlePreset = (p: DatePreset) => {
+    const range = getDatePresetRange(p);
+    setFilters({ ...filters, ...range });
+  };
+
+  const isCustom = !activePreset && (filters.dateFrom || filters.dateTo);
+
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      {DATE_PRESETS.map((p) => (
+        <button
+          key={p}
+          onClick={() => handlePreset(p)}
+          className={cn(
+            "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+            activePreset === p
+              ? "bg-primary text-primary-foreground"
+              : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+          )}
+        >
+          {p}
+        </button>
+      ))}
+      <Popover open={customOpen} onOpenChange={setCustomOpen}>
+        <PopoverTrigger asChild>
+          <button
+            className={cn(
+              "flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+              isCustom
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            )}
+          >
+            <CalendarIcon className="h-3 w-3" />
+            {isCustom && fromDate
+              ? `${format(fromDate, "MMM d")}${toDate ? ` – ${format(toDate, "MMM d")}` : ""}`
+              : "Custom"}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <div className="p-3 text-xs text-muted-foreground font-medium">Select date range</div>
+          <div className="flex flex-col sm:flex-row">
+            <div className="border-r border-border/50">
+              <div className="px-3 pb-1 text-[10px] text-muted-foreground uppercase tracking-wider">From</div>
+              <Calendar
+                mode="single"
+                selected={fromDate}
+                onSelect={(d) => {
+                  setFilters({ ...filters, dateFrom: d ? d.toISOString().slice(0, 10) : "" });
+                }}
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </div>
+            <div>
+              <div className="px-3 pb-1 text-[10px] text-muted-foreground uppercase tracking-wider">To</div>
+              <Calendar
+                mode="single"
+                selected={toDate}
+                onSelect={(d) => {
+                  setFilters({ ...filters, dateTo: d ? d.toISOString().slice(0, 10) : "" });
+                }}
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
 
 function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   return (
@@ -65,12 +151,10 @@ export default function AppLayout() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
 
-  // Close sheet on route change
   useEffect(() => {
     setOpen(false);
   }, [location.pathname]);
 
-  // Close sheet when resizing to desktop
   useEffect(() => {
     const mql = window.matchMedia("(min-width: 1024px)");
     const handler = () => {
@@ -101,16 +185,18 @@ export default function AppLayout() {
 
       {/* Main content */}
       <div className="flex-1 lg:ml-64">
-        {/* Mobile top bar */}
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/40 bg-background/80 backdrop-blur-md px-4 lg:hidden">
-          <Button variant="ghost" size="icon" onClick={() => setOpen(true)}>
+        {/* Top bar with date presets */}
+        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-border/40 bg-background/80 backdrop-blur-md px-4 lg:px-6 h-12">
+          <Button variant="ghost" size="icon" className="lg:hidden shrink-0" onClick={() => setOpen(true)}>
             <Menu className="h-5 w-5" />
           </Button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 lg:hidden shrink-0">
             <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/20">
               <span className="text-sm font-bold text-primary glow-text">C</span>
             </div>
-            <span className="font-semibold text-foreground">CryptoJournal</span>
+          </div>
+          <div className="flex-1 overflow-x-auto scrollbar-none">
+            <DatePresetBar />
           </div>
         </header>
 
