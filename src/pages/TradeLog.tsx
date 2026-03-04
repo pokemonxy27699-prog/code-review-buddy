@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Trade } from "@/lib/mock-data";
+import { Trade } from "@/lib/types";
 import { loadVisibleColumns, ColumnKey, ALL_COLUMNS } from "@/lib/trade-store";
 import { useTrades, useFilters, useUpdateTrade, useDeleteTrade } from "@/store/trades";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";

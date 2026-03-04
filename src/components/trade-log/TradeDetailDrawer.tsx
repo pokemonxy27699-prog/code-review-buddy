@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Trade } from "@/lib/mock-data";
+import { Trade } from "@/lib/types";
 import { loadTagCategories } from "@/lib/trade-store";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";

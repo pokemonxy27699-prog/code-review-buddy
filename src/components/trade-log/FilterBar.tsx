@@ -14,7 +14,7 @@ import {
   ColumnKey,
 } from "@/lib/trade-store";
 import { Search, X, Bookmark, RotateCcw } from "lucide-react";
-import { Trade } from "@/lib/mock-data";
+import { Trade } from "@/lib/types";
 
 interface FilterBarProps {
   filters: TradeFilters;
