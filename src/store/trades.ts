@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Trade } from "@/lib/mock-data";
+import { Trade } from "@/lib/types";
 import {
   TradeFilters,
   DEFAULT_FILTERS,

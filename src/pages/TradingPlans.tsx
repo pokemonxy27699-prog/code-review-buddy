@@ -1,10 +1,23 @@
 import { useState } from "react";
-import { mockTradingPlans, TradingPlan } from "@/lib/mock-data";
+import { TradingPlan } from "@/lib/types";
+import { mockTradingPlans } from "@/lib/mock-data";
 import { CheckCircle2, Circle, Plus, BookOpen, ListChecks, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+const STORAGE_KEY = "trading-plans";
+
+function loadPlans(): TradingPlan[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  const plans = [...mockTradingPlans];
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
+  return plans;
+}
+
 export default function TradingPlans() {
-  const [plans] = useState<TradingPlan[]>(mockTradingPlans);
+  const [plans] = useState<TradingPlan[]>(loadPlans);
   const [expanded, setExpanded] = useState<string | null>(plans[0]?.id || null);
 
   return (
@@ -23,7 +36,6 @@ export default function TradingPlans() {
       <div className="space-y-4">
         {plans.map((plan) => (
           <div key={plan.id} className="glass-card-hover overflow-hidden">
-            {/* Header */}
             <button
               onClick={() => setExpanded(expanded === plan.id ? null : plan.id)}
               className="flex w-full items-center justify-between p-5"
@@ -40,18 +52,12 @@ export default function TradingPlans() {
                   </p>
                 </div>
               </div>
-              {expanded === plan.id ? (
-                <ChevronUp className="h-4 w-4 text-muted-foreground" />
-              ) : (
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              )}
+              {expanded === plan.id ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
             </button>
 
-            {/* Expanded content */}
             {expanded === plan.id && (
               <div className="border-t border-border/40 p-5">
                 <div className="grid gap-6 lg:grid-cols-2">
-                  {/* Rules */}
                   <div>
                     <div className="mb-3 flex items-center gap-2">
                       <ListChecks className="h-4 w-4 text-primary" />
@@ -60,16 +66,12 @@ export default function TradingPlans() {
                     <ul className="space-y-2">
                       {plan.rules.map((rule, i) => (
                         <li key={i} className="flex items-start gap-2 rounded-lg bg-muted/20 p-3 text-sm">
-                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                            {i + 1}
-                          </span>
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{i + 1}</span>
                           {rule}
                         </li>
                       ))}
                     </ul>
                   </div>
-
-                  {/* Checklist */}
                   <div>
                     <div className="mb-3 flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-[hsl(var(--success))]" />
@@ -89,14 +91,8 @@ export default function TradingPlans() {
 
 function ChecklistItems({ items }: { items: string[] }) {
   const [checked, setChecked] = useState<Set<number>>(new Set());
-
   const toggle = (i: number) => {
-    setChecked((prev) => {
-      const next = new Set(prev);
-      if (next.has(i)) next.delete(i);
-      else next.add(i);
-      return next;
-    });
+    setChecked((prev) => { const next = new Set(prev); if (next.has(i)) next.delete(i); else next.add(i); return next; });
   };
 
   return (
@@ -105,15 +101,9 @@ function ChecklistItems({ items }: { items: string[] }) {
         <li key={i}>
           <button
             onClick={() => toggle(i)}
-            className={`flex w-full items-start gap-2 rounded-lg p-3 text-sm text-left transition-colors ${
-              checked.has(i) ? "bg-[hsl(var(--success)/0.08)]" : "bg-muted/20 hover:bg-muted/30"
-            }`}
+            className={`flex w-full items-start gap-2 rounded-lg p-3 text-sm text-left transition-colors ${checked.has(i) ? "bg-[hsl(var(--success)/0.08)]" : "bg-muted/20 hover:bg-muted/30"}`}
           >
-            {checked.has(i) ? (
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-[hsl(var(--success))]" />
-            ) : (
-              <Circle className="h-4 w-4 shrink-0 text-muted-foreground" />
-            )}
+            {checked.has(i) ? <CheckCircle2 className="h-4 w-4 shrink-0 text-[hsl(var(--success))]" /> : <Circle className="h-4 w-4 shrink-0 text-muted-foreground" />}
             <span className={checked.has(i) ? "line-through text-muted-foreground" : ""}>{item}</span>
           </button>
         </li>

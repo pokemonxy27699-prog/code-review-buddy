@@ -5,10 +5,12 @@ import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Cell } from "recharts";
 import { TrendingUp, TrendingDown, Flame, Frown, Star, AlertCircle, FileBarChart } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFilters, useTrades } from "@/store/trades";
+import { useNavigate } from "react-router-dom";
 
 export default function Reports() {
   const { filters } = useFilters();
   const { data: trades = [], isLoading, isError } = useTrades(filters);
+  const navigate = useNavigate();
 
   const byDay = useMemo(() => getPnlByDayOfWeek(trades), [trades]);
   const byHour = useMemo(() => getPnlByHour(trades), [trades]);
@@ -16,6 +18,11 @@ export default function Reports() {
   const streaks = useMemo(() => getWinLossStreaks(trades), [trades]);
   const byEmotion = useMemo(() => getPnlByEmotion(trades), [trades]);
   const mistakes = useMemo(() => getMistakeAnalysis(trades), [trades]);
+
+  const drilldown = (params: Record<string, string>) => {
+    const sp = new URLSearchParams(params);
+    navigate(`/trades?${sp.toString()}`);
+  };
 
   if (isError) {
     return (
@@ -88,7 +95,7 @@ export default function Reports() {
         </div>
       )}
 
-      {/* Charts Row */}
+      {/* Charts */}
       {isLoading ? (
         <div className="grid gap-6 lg:grid-cols-2">
           {Array.from({ length: 2 }).map((_, i) => (
@@ -138,7 +145,7 @@ export default function Reports() {
             </div>
           </div>
 
-          {/* Setup Performance Table */}
+          {/* Setup Performance Table - clickable rows */}
           <div className="glass-card p-6">
             <h3 className="mb-4 text-sm font-semibold">Performance by Setup</h3>
             <div className="overflow-x-auto">
@@ -154,7 +161,11 @@ export default function Reports() {
                 </thead>
                 <tbody className="divide-y divide-border/30">
                   {bySetup.map((s) => (
-                    <tr key={s.setup} className="hover:bg-card/40">
+                    <tr
+                      key={s.setup}
+                      className="hover:bg-card/40 cursor-pointer"
+                      onClick={() => drilldown({ setup: s.setup })}
+                    >
                       <td className="py-3 font-medium">{s.setup}</td>
                       <td className="py-3 text-right font-mono">{s.count}</td>
                       <td className="py-3 text-right font-mono">{s.winRate}%</td>
@@ -171,7 +182,7 @@ export default function Reports() {
             </div>
           </div>
 
-          {/* Emotion & Mistake Analysis */}
+          {/* Emotion & Mistake Analysis - clickable */}
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="glass-card p-6">
               <h3 className="mb-4 text-sm font-semibold">Performance by Emotion</h3>
@@ -180,7 +191,11 @@ export default function Reports() {
                   const maxPnl = Math.max(...byEmotion.map(x => Math.abs(x.pnl)), 1);
                   const width = Math.abs(e.pnl) / maxPnl * 100;
                   return (
-                    <div key={e.emotion} className="space-y-1">
+                    <div
+                      key={e.emotion}
+                      className="space-y-1 cursor-pointer hover:bg-card/40 rounded-lg p-1 -m-1 transition-colors"
+                      onClick={() => drilldown({ emotion: e.emotion })}
+                    >
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-medium">{e.emotion}</span>
                         <span className="text-muted-foreground">{e.count} trades • {e.winRate}% WR</span>
@@ -189,10 +204,7 @@ export default function Reports() {
                         <div className="flex-1 h-2 rounded-full bg-muted/30 overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all"
-                            style={{
-                              width: `${width}%`,
-                              backgroundColor: e.pnl >= 0 ? "hsl(var(--chart-profit))" : "hsl(var(--chart-loss))",
-                            }}
+                            style={{ width: `${width}%`, backgroundColor: e.pnl >= 0 ? "hsl(var(--chart-profit))" : "hsl(var(--chart-loss))" }}
                           />
                         </div>
                         <span className={`font-mono text-xs font-semibold min-w-[60px] text-right ${e.pnl >= 0 ? "text-[hsl(var(--success))]" : "text-destructive"}`}>
@@ -212,14 +224,16 @@ export default function Reports() {
               ) : (
                 <div className="space-y-3">
                   {mistakes.map((m) => (
-                    <div key={m.mistake} className="flex items-center justify-between rounded-lg bg-destructive/5 p-3">
+                    <div
+                      key={m.mistake}
+                      className="flex items-center justify-between rounded-lg bg-destructive/5 p-3 cursor-pointer hover:bg-destructive/10 transition-colors"
+                      onClick={() => drilldown({ mistake: m.mistake })}
+                    >
                       <div>
                         <p className="text-sm font-medium">{m.mistake}</p>
                         <p className="text-xs text-muted-foreground">{m.count} occurrences • Avg: ${m.avgPnl}</p>
                       </div>
-                      <p className="font-mono text-sm font-bold text-destructive">
-                        ${m.pnl.toLocaleString()}
-                      </p>
+                      <p className="font-mono text-sm font-bold text-destructive">${m.pnl.toLocaleString()}</p>
                     </div>
                   ))}
                 </div>

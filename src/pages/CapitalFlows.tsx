@@ -1,7 +1,20 @@
-import { useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { CapitalFlow, TradingPlan } from "@/lib/types";
 import { mockCapitalFlows } from "@/lib/mock-data";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowDownLeft, ArrowUpRight, Sparkles, Gift } from "lucide-react";
+
+const STORAGE_KEY = "capital-flows";
+
+function loadCapitalFlows(): CapitalFlow[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  const flows = [...mockCapitalFlows];
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(flows));
+  return flows;
+}
 
 const typeConfig = {
   deposit: { icon: ArrowDownLeft, label: "Deposit", color: "text-[hsl(var(--success))]", bg: "bg-[hsl(var(--success)/0.12)]" },
@@ -11,15 +24,17 @@ const typeConfig = {
 };
 
 export default function CapitalFlows() {
+  const [flows] = useState<CapitalFlow[]>(loadCapitalFlows);
+
   const summaries = useMemo(() => {
     const sums = { deposit: 0, withdrawal: 0, dusting: 0, reward: 0 };
-    mockCapitalFlows.forEach((f) => (sums[f.type] += f.usdValue));
+    flows.forEach((f) => (sums[f.type] += f.usdValue));
     return Object.entries(sums).map(([type, total]) => ({
       type: type as keyof typeof typeConfig,
       total,
-      count: mockCapitalFlows.filter((f) => f.type === type).length,
+      count: flows.filter((f) => f.type === type).length,
     }));
-  }, []);
+  }, [flows]);
 
   return (
     <div className="space-y-6">
@@ -28,7 +43,6 @@ export default function CapitalFlows() {
         <p className="text-sm text-muted-foreground">Deposits, withdrawals, dusting & rewards</p>
       </div>
 
-      {/* Summary cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {summaries.map((s) => {
           const cfg = typeConfig[s.type];
@@ -47,38 +61,39 @@ export default function CapitalFlows() {
         })}
       </div>
 
-      {/* Table */}
       <div className="glass-card overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-border/50 hover:bg-transparent">
-              <TableHead>Date</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Asset</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
-              <TableHead className="text-right">USD Value</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mockCapitalFlows.map((f) => {
-              const cfg = typeConfig[f.type];
-              return (
-                <TableRow key={f.id} className="border-border/30">
-                  <TableCell className="font-mono text-xs text-muted-foreground">{new Date(f.date).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${cfg.bg} ${cfg.color}`}>
-                      <cfg.icon className="h-3 w-3" />
-                      {cfg.label}
-                    </span>
-                  </TableCell>
-                  <TableCell className="font-medium">{f.asset}</TableCell>
-                  <TableCell className="text-right font-mono text-sm">{f.amount}</TableCell>
-                  <TableCell className={`text-right font-mono text-sm font-semibold ${cfg.color}`}>${f.usdValue.toLocaleString()}</TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-border/50 hover:bg-transparent">
+                <TableHead>Date</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Asset</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="text-right">USD Value</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {flows.map((f) => {
+                const cfg = typeConfig[f.type];
+                return (
+                  <TableRow key={f.id} className="border-border/30">
+                    <TableCell className="font-mono text-xs text-muted-foreground">{new Date(f.date).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${cfg.bg} ${cfg.color}`}>
+                        <cfg.icon className="h-3 w-3" />
+                        {cfg.label}
+                      </span>
+                    </TableCell>
+                    <TableCell className="font-medium">{f.asset}</TableCell>
+                    <TableCell className="text-right font-mono text-sm">{f.amount}</TableCell>
+                    <TableCell className={`text-right font-mono text-sm font-semibold ${cfg.color}`}>${f.usdValue.toLocaleString()}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   );
