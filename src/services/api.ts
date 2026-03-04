@@ -1,4 +1,4 @@
-import { Trade } from "@/lib/mock-data";
+import { Trade } from "@/lib/types";
 import { TradeFilters } from "@/lib/trade-store";
 import { TagCategories } from "@/lib/trade-store";
 
