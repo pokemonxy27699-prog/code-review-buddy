@@ -338,15 +338,26 @@ export default function TradeLog() {
         </div>
       )}
 
-      {/* Detail drawer */}
-      <TradeDetailDrawer
-        trade={detailTrade}
-        onClose={() => setDetailTrade(null)}
-        onSave={(id, patch) => {
-          updateTrade.mutate({ id, patch });
-          setDetailTrade(null);
-        }}
-      />
+      {/* Detail: drawer on mobile, modal on desktop */}
+      {isMobile ? (
+        <TradeDetailDrawer
+          trade={detailTrade}
+          onClose={() => setDetailTrade(null)}
+          onSave={(id, patch) => {
+            updateTrade.mutate({ id, patch });
+            setDetailTrade(null);
+          }}
+        />
+      ) : (
+        <TradeReviewModal
+          trade={detailTrade}
+          onClose={() => setDetailTrade(null)}
+          onSave={(id, patch) => {
+            updateTrade.mutate({ id, patch });
+            setDetailTrade(null);
+          }}
+        />
+      )}
 
       {/* Delete confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
