@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Trade } from "@/lib/types";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { loadVisibleColumns, ColumnKey, ALL_COLUMNS } from "@/lib/trade-store";
 import { useTrades, useFilters, useUpdateTrade, useDeleteTrade } from "@/store/trades";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -27,6 +28,7 @@ import { ArrowUpDown, Star, Download, Clock, Loader2, AlertCircle, Inbox, MoreHo
 import FilterBar from "@/components/trade-log/FilterBar";
 import ColumnPicker from "@/components/trade-log/ColumnPicker";
 import TradeDetailDrawer from "@/components/trade-log/TradeDetailDrawer";
+import TradeReviewModal from "@/components/trade-log/TradeReviewModal";
 import { exportTradesToCsv } from "@/lib/trade-store";
 
 type SortKey = keyof Trade;
@@ -59,6 +61,7 @@ function TableSkeleton({ cols }: { cols: number }) {
 }
 
 export default function TradeLog() {
+  const isMobile = useIsMobile();
   const { filters, setFilters } = useFilters();
   const { data: trades = [], isLoading, isError, error } = useTrades(filters);
   const updateTrade = useUpdateTrade();
@@ -335,15 +338,26 @@ export default function TradeLog() {
         </div>
       )}
 
-      {/* Detail drawer */}
-      <TradeDetailDrawer
-        trade={detailTrade}
-        onClose={() => setDetailTrade(null)}
-        onSave={(id, patch) => {
-          updateTrade.mutate({ id, patch });
-          setDetailTrade(null);
-        }}
-      />
+      {/* Detail: drawer on mobile, modal on desktop */}
+      {isMobile ? (
+        <TradeDetailDrawer
+          trade={detailTrade}
+          onClose={() => setDetailTrade(null)}
+          onSave={(id, patch) => {
+            updateTrade.mutate({ id, patch });
+            setDetailTrade(null);
+          }}
+        />
+      ) : (
+        <TradeReviewModal
+          trade={detailTrade}
+          onClose={() => setDetailTrade(null)}
+          onSave={(id, patch) => {
+            updateTrade.mutate({ id, patch });
+            setDetailTrade(null);
+          }}
+        />
+      )}
 
       {/* Delete confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
