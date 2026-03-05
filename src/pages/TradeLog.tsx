@@ -61,6 +61,7 @@ function TableSkeleton({ cols }: { cols: number }) {
 }
 
 export default function TradeLog() {
+  const isMobile = useIsMobile();
   const { filters, setFilters } = useFilters();
   const { data: trades = [], isLoading, isError, error } = useTrades(filters);
   const updateTrade = useUpdateTrade();
