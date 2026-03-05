@@ -28,6 +28,7 @@ import { ArrowUpDown, Star, Download, Clock, Loader2, AlertCircle, Inbox, MoreHo
 import FilterBar from "@/components/trade-log/FilterBar";
 import ColumnPicker from "@/components/trade-log/ColumnPicker";
 import TradeDetailDrawer from "@/components/trade-log/TradeDetailDrawer";
+import TradeReviewModal from "@/components/trade-log/TradeReviewModal";
 import { exportTradesToCsv } from "@/lib/trade-store";
 
 type SortKey = keyof Trade;
