@@ -6,6 +6,22 @@ export type Setup = typeof SETUPS[number];
 export type Emotion = typeof EMOTIONS[number];
 export type Mistake = typeof MISTAKES[number];
 
+export interface TradeJournal {
+  preTradePlan?: string;
+  whyEntered?: string;
+  whyExited?: string;
+  whatWentWell?: string;
+  whatWentWrong?: string;
+  lessonLearned?: string;
+}
+
+export interface MistakeReview {
+  mistakes?: string[];
+  severity?: "low" | "medium" | "high";
+  avoidable?: boolean;
+  reflection?: string;
+}
+
 export interface Trade {
   id: string;
   date: string;
@@ -25,6 +41,17 @@ export interface Trade {
   takeProfit?: number;
   tags?: string[];
   holdTime?: number;
+  journal?: TradeJournal;
+  mistakeReview?: MistakeReview;
+  screenshot?: string;
+  annotations?: string;
+}
+
+export interface ReviewTemplate {
+  id: string;
+  name: string;
+  journal: TradeJournal;
+  suggestedMistakes?: string[];
 }
 
 export interface CapitalFlow {
