@@ -104,10 +104,3 @@ export interface TradingPlan {
   createdAt: string;
   updatedAt: string;
 }
-  id: string;
-  title: string;
-  rules: string[];
-  checklist: string[];
-  createdAt: string;
-  updatedAt: string;
-}
