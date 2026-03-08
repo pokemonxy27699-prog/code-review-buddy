@@ -202,7 +202,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
             </TabsList>
           </div>
 
-          <div className="overflow-y-auto flex-1 p-6">
+          <div className="overflow-y-auto flex-1 min-h-0 p-6 pr-4">
             <TabsContent value="overview" className="mt-0 focus-visible:ring-0">
               <OverviewTab
                 trade={trade}
