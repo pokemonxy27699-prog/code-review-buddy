@@ -99,6 +99,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
       mistakeReview,
       screenshot,
       annotations: JSON.stringify(annotations),
+      timeline,
       mistake: (mistakeReview.mistakes?.[0] as Trade["mistake"]) || "None",
     });
     setEditing(false);
