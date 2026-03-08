@@ -427,8 +427,8 @@ type CompareMode = "setup" | "winloss" | "mistakes" | "month";
 
 function CompareSection({ trades }: { trades: import("@/lib/types").Trade[] }) {
   const [mode, setMode] = useState<CompareMode>("winloss");
-  const [setupA, setSetupA] = useState(SETUPS[0]);
-  const [setupB, setSetupB] = useState(SETUPS[1]);
+  const [setupA, setSetupA] = useState<string>(SETUPS[0]);
+  const [setupB, setSetupB] = useState<string>(SETUPS[1]);
 
   const uniqueSetups = useMemo(() => {
     const s = new Set(trades.map(t => t.setup).filter(Boolean));
