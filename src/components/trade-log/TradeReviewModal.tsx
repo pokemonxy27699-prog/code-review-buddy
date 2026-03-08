@@ -135,7 +135,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
   return (
     <Dialog open={!!trade} onOpenChange={() => onClose()}>
       <DialogContent
-        className="max-w-6xl w-[95vw] max-h-[90vh] p-0 gap-0 overflow-hidden bg-card border-border/50"
+        className="max-w-6xl w-[95vw] max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col bg-card border-border/50"
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         {/* ── Header ── */}
