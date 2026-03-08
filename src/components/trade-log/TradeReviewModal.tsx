@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Trade, TradeJournal, MistakeReview } from "@/lib/types";
+import { Trade, TradeJournal, MistakeReview, TimelineEvent } from "@/lib/types";
 import { useTags } from "@/store/trades";
 import {
   Dialog,
@@ -8,11 +8,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Pencil, Eye, LayoutDashboard, FileText, ShieldAlert, Image } from "lucide-react";
+import { Pencil, Eye, LayoutDashboard, FileText, ShieldAlert, Image, Play } from "lucide-react";
 import OverviewTab from "./tabs/OverviewTab";
 import NotesTab from "./tabs/NotesTab";
 import MistakesTab from "./tabs/MistakesTab";
 import ScreenshotTab, { type Annotation } from "./tabs/ScreenshotTab";
+import ReplayTab from "./tabs/ReplayTab";
 
 interface Props {
   trade: Trade | null;
@@ -31,6 +32,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
   const [mistakeReview, setMistakeReview] = useState<MistakeReview>({});
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -48,6 +50,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
       });
       setScreenshot(trade.screenshot || null);
       setAnnotations(trade.annotations ? JSON.parse(trade.annotations) : []);
+      setTimeline(trade.timeline || []);
       setEditing(false);
       setActiveTab("overview");
     }
@@ -58,10 +61,10 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     autosaveTimer.current = setTimeout(() => {
       if (trade && editing) {
-        onSave(trade.id, { journal, mistakeReview, screenshot, annotations: JSON.stringify(annotations) });
+        onSave(trade.id, { journal, mistakeReview, screenshot, annotations: JSON.stringify(annotations), timeline });
       }
     }, 1000);
-  }, [trade, editing, journal, mistakeReview, screenshot, annotations, onSave]);
+  }, [trade, editing, journal, mistakeReview, screenshot, annotations, timeline, onSave]);
 
   useEffect(() => {
     if (editing) scheduleAutosave();
@@ -96,6 +99,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
       mistakeReview,
       screenshot,
       annotations: JSON.stringify(annotations),
+      timeline,
       mistake: (mistakeReview.mistakes?.[0] as Trade["mistake"]) || "None",
     });
     setEditing(false);
@@ -109,6 +113,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
     setMistakeReview(trade.mistakeReview || { mistakes: [], severity: undefined, avoidable: false, reflection: "" });
     setScreenshot(trade.screenshot || null);
     setAnnotations(trade.annotations ? JSON.parse(trade.annotations) : []);
+    setTimeline(trade.timeline || []);
     setEditing(false);
   };
 
@@ -124,6 +129,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
     { value: "notes", label: "Notes", icon: FileText },
     { value: "mistakes", label: "Mistakes", icon: ShieldAlert },
     { value: "screenshot", label: "Screenshot", icon: Image },
+    { value: "replay", label: "Replay", icon: Play },
   ];
 
   return (
@@ -230,6 +236,20 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
                 annotations={annotations}
                 onScreenshotChange={setScreenshot}
                 onAnnotationsChange={setAnnotations}
+              />
+            </TabsContent>
+
+            <TabsContent value="replay" className="mt-0 focus-visible:ring-0">
+              <ReplayTab
+                trade={trade}
+                screenshot={screenshot}
+                timeline={timeline}
+                onTimelineChange={(t) => {
+                  setTimeline(t);
+                  if (trade) {
+                    onSave(trade.id, { timeline: t });
+                  }
+                }}
               />
             </TabsContent>
           </div>
