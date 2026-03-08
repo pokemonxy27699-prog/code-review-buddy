@@ -135,11 +135,11 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
   return (
     <Dialog open={!!trade} onOpenChange={() => onClose()}>
       <DialogContent
-        className="max-w-6xl w-[95vw] max-h-[90vh] p-0 gap-0 overflow-hidden bg-card border-border/50"
+        className="max-w-6xl w-[95vw] max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col bg-card border-border/50"
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border/30 bg-card/80">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border/30 bg-card/80 shrink-0">
           <DialogTitle className="flex items-center gap-3 text-base font-semibold">
             <span className="text-lg font-bold">{trade.instrument}</span>
             <span
@@ -187,7 +187,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
 
         {/* ── Tabs + Body ── */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col overflow-hidden flex-1">
-          <div className="px-6 pt-3 border-b border-border/20 bg-card/60">
+          <div className="px-6 pt-3 border-b border-border/20 bg-card/60 shrink-0">
             <TabsList className="bg-transparent h-auto p-0 gap-0">
               {TABS.map((tab) => (
                 <TabsTrigger
@@ -202,7 +202,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
             </TabsList>
           </div>
 
-          <div className="overflow-y-auto flex-1 p-6">
+          <div className="overflow-y-auto flex-1 min-h-0 p-6 pr-4">
             <TabsContent value="overview" className="mt-0 focus-visible:ring-0">
               <OverviewTab
                 trade={trade}
@@ -257,7 +257,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
 
         {/* ── Save / Cancel bar ── */}
         {editing && (
-          <div className="flex items-center justify-between px-6 py-3 border-t border-border/20 bg-card/80">
+          <div className="flex items-center justify-between px-6 py-3 border-t border-border/20 bg-card/80 shrink-0">
             <span className="text-[10px] text-muted-foreground">
               Autosaves notes · Ctrl+Enter to save all
             </span>
