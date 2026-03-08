@@ -61,10 +61,10 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     autosaveTimer.current = setTimeout(() => {
       if (trade && editing) {
-        onSave(trade.id, { journal, mistakeReview, screenshot, annotations: JSON.stringify(annotations) });
+        onSave(trade.id, { journal, mistakeReview, screenshot, annotations: JSON.stringify(annotations), timeline });
       }
     }, 1000);
-  }, [trade, editing, journal, mistakeReview, screenshot, annotations, onSave]);
+  }, [trade, editing, journal, mistakeReview, screenshot, annotations, timeline, onSave]);
 
   useEffect(() => {
     if (editing) scheduleAutosave();
