@@ -17,6 +17,7 @@ const navItems = [
   { to: "/capital", icon: ArrowUpDown, label: "Capital Flows" },
   { to: "/analytics", icon: CalendarDays, label: "Analytics" },
   { to: "/reports", icon: BarChart3, label: "Reports" },
+  { to: "/journal", icon: NotebookPen, label: "Daily Journal" },
   { to: "/plans", icon: BookOpen, label: "Trading Plans" },
   { to: "/settings", icon: Settings, label: "Settings" },
 ];

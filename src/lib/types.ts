@@ -84,7 +84,26 @@ export interface AssetSummary {
   pnlHistory: number[];
 }
 
+export interface DailyJournal {
+  date: string;
+  preMarketPlan?: string;
+  marketConditions?: string;
+  whatDidWell?: string;
+  mistakesMade?: string;
+  lessonLearned?: string;
+  tomorrowFocus?: string;
+  grade?: string;
+  emotionTags?: string[];
+}
+
 export interface TradingPlan {
+  id: string;
+  title: string;
+  rules: string[];
+  checklist: string[];
+  createdAt: string;
+  updatedAt: string;
+}
   id: string;
   title: string;
   rules: string[];

@@ -277,6 +277,7 @@ export default function DailyJournal() {
         <TradeReviewModal
           trade={selectedTrade}
           onClose={() => setSelectedTrade(null)}
+          onSave={() => {}}
         />
       )}
     </div>
