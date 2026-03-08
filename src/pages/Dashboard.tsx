@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useFilters, useTrades } from "@/store/trades";
 import { useNavigate } from "react-router-dom";
 import CalendarHeatmap from "@/components/CalendarHeatmap";
+import RecentJournalWidget from "@/components/RecentJournalWidget";
 
 export default function Dashboard() {
   const { filters } = useFilters();
@@ -230,6 +231,9 @@ export default function Dashboard() {
               )}
             </div>
           </div>
+
+          {/* Recent Journal Entries */}
+          <RecentJournalWidget />
         </>
       )}
     </div>

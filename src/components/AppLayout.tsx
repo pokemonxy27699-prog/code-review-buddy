@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboard, List, PieChart, ArrowUpDown, CalendarDays, BarChart3, BookOpen, RefreshCw, Menu, Settings, Calendar as CalendarIcon } from "lucide-react";
+import { LayoutDashboard, List, PieChart, ArrowUpDown, CalendarDays, BarChart3, BookOpen, RefreshCw, Menu, Settings, Calendar as CalendarIcon, NotebookPen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -17,6 +17,7 @@ const navItems = [
   { to: "/capital", icon: ArrowUpDown, label: "Capital Flows" },
   { to: "/analytics", icon: CalendarDays, label: "Analytics" },
   { to: "/reports", icon: BarChart3, label: "Reports" },
+  { to: "/journal", icon: NotebookPen, label: "Daily Journal" },
   { to: "/plans", icon: BookOpen, label: "Trading Plans" },
   { to: "/settings", icon: Settings, label: "Settings" },
 ];
