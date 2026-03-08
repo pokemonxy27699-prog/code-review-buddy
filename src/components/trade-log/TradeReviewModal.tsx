@@ -139,7 +139,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border/30 bg-card/80">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border/30 bg-card/80 shrink-0">
           <DialogTitle className="flex items-center gap-3 text-base font-semibold">
             <span className="text-lg font-bold">{trade.instrument}</span>
             <span
