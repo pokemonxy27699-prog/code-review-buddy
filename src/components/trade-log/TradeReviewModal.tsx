@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Pencil, Eye, LayoutDashboard, FileText, ShieldAlert, Image, Play } from "lucide-react";
+import { Pencil, Eye, LayoutDashboard, FileText, ShieldAlert, Image, Play, X } from "lucide-react";
 import OverviewTab from "./tabs/OverviewTab";
 import NotesTab from "./tabs/NotesTab";
 import MistakesTab from "./tabs/MistakesTab";
