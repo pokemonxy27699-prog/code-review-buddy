@@ -231,6 +231,9 @@ export default function Dashboard() {
               )}
             </div>
           </div>
+
+          {/* Recent Journal Entries */}
+          <RecentJournalWidget />
         </>
       )}
     </div>
