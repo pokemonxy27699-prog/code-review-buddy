@@ -22,6 +22,17 @@ export interface MistakeReview {
   reflection?: string;
 }
 
+export type TimelineEventType = "entry" | "scale_in" | "scale_out" | "stop_move" | "exit";
+
+export interface TimelineEvent {
+  id: string;
+  time: string;
+  price: number;
+  size?: number;
+  type: TimelineEventType;
+  note?: string;
+}
+
 export interface Trade {
   id: string;
   date: string;
@@ -45,6 +56,7 @@ export interface Trade {
   mistakeReview?: MistakeReview;
   screenshot?: string;
   annotations?: string;
+  timeline?: TimelineEvent[];
 }
 
 export interface ReviewTemplate {
