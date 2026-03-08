@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Trade, TradeJournal, MistakeReview } from "@/lib/types";
+import { Trade, TradeJournal, MistakeReview, TimelineEvent } from "@/lib/types";
 import { useTags } from "@/store/trades";
 import {
   Dialog,
@@ -8,11 +8,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Pencil, Eye, LayoutDashboard, FileText, ShieldAlert, Image } from "lucide-react";
+import { Pencil, Eye, LayoutDashboard, FileText, ShieldAlert, Image, Play } from "lucide-react";
 import OverviewTab from "./tabs/OverviewTab";
 import NotesTab from "./tabs/NotesTab";
 import MistakesTab from "./tabs/MistakesTab";
 import ScreenshotTab, { type Annotation } from "./tabs/ScreenshotTab";
+import ReplayTab from "./tabs/ReplayTab";
 
 interface Props {
   trade: Trade | null;
