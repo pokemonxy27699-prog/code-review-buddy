@@ -257,7 +257,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
 
         {/* ── Save / Cancel bar ── */}
         {editing && (
-          <div className="flex items-center justify-between px-6 py-3 border-t border-border/20 bg-card/80">
+          <div className="flex items-center justify-between px-6 py-3 border-t border-border/20 bg-card/80 shrink-0">
             <span className="text-[10px] text-muted-foreground">
               Autosaves notes · Ctrl+Enter to save all
             </span>
