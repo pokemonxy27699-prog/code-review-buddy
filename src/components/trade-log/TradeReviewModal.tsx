@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Pencil, Eye, LayoutDashboard, FileText, ShieldAlert, Image, Play } from "lucide-react";
+import { Pencil, Eye, LayoutDashboard, FileText, ShieldAlert, Image, Play, X } from "lucide-react";
 import OverviewTab from "./tabs/OverviewTab";
 import NotesTab from "./tabs/NotesTab";
 import MistakesTab from "./tabs/MistakesTab";
@@ -135,15 +135,15 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
   return (
     <Dialog open={!!trade} onOpenChange={() => onClose()}>
       <DialogContent
-        className="max-w-6xl w-[95vw] max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col bg-card border-border/50"
+        className="max-w-6xl w-[95vw] max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col bg-card border-border/50 [&>button[class*='absolute']]:hidden"
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border/30 bg-card/80 shrink-0">
-          <DialogTitle className="flex items-center gap-3 text-base font-semibold">
-            <span className="text-lg font-bold">{trade.instrument}</span>
+        <div className="flex items-center justify-between px-6 pr-4 py-4 border-b border-border/30 bg-card/80 shrink-0">
+          <DialogTitle className="flex items-center gap-2 sm:gap-3 text-base font-semibold min-w-0 flex-1 mr-3">
+            <span className="text-lg font-bold truncate">{trade.instrument}</span>
             <span
-              className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ${
+              className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold shrink-0 ${
                 trade.side === "BUY"
                   ? "bg-success/15 text-success"
                   : "bg-destructive/15 text-destructive"
@@ -152,28 +152,28 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
               {trade.side === "BUY" ? "LONG" : "SHORT"}
             </span>
             <span
-              className={`font-mono text-lg font-bold ${
+              className={`font-mono text-lg font-bold shrink-0 ${
                 trade.pnl >= 0 ? "text-success" : "text-destructive"
               }`}
             >
               {trade.pnl >= 0 ? "+" : ""}${trade.pnl.toLocaleString()}
             </span>
             <span
-              className={`font-mono text-xs ${
+              className={`font-mono text-xs shrink-0 hidden sm:inline ${
                 Number(pnlPct) >= 0 ? "text-success/70" : "text-destructive/70"
               }`}
             >
               ({Number(pnlPct) >= 0 ? "+" : ""}{pnlPct}%)
             </span>
           </DialogTitle>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground font-mono">
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs text-muted-foreground font-mono hidden lg:inline">
               {new Date(trade.date).toLocaleString()}
             </span>
             <Button
               variant={editing ? "default" : "outline"}
               size="sm"
-              className="h-7 text-xs gap-1"
+              className="h-8 text-xs gap-1.5 px-3"
               onClick={() => setEditing(!editing)}
             >
               {editing ? (
@@ -181,6 +181,15 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
               ) : (
                 <><Pencil className="h-3 w-3" /> Edit</>
               )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60"
+              onClick={onClose}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
             </Button>
           </div>
         </div>
