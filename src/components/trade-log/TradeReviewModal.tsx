@@ -238,6 +238,20 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
                 onAnnotationsChange={setAnnotations}
               />
             </TabsContent>
+
+            <TabsContent value="replay" className="mt-0 focus-visible:ring-0">
+              <ReplayTab
+                trade={trade}
+                screenshot={screenshot}
+                timeline={timeline}
+                onTimelineChange={(t) => {
+                  setTimeline(t);
+                  if (trade) {
+                    onSave(trade.id, { timeline: t });
+                  }
+                }}
+              />
+            </TabsContent>
           </div>
         </Tabs>
 
