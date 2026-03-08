@@ -187,7 +187,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
 
         {/* ── Tabs + Body ── */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col overflow-hidden flex-1">
-          <div className="px-6 pt-3 border-b border-border/20 bg-card/60">
+          <div className="px-6 pt-3 border-b border-border/20 bg-card/60 shrink-0">
             <TabsList className="bg-transparent h-auto p-0 gap-0">
               {TABS.map((tab) => (
                 <TabsTrigger
