@@ -113,6 +113,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
     setMistakeReview(trade.mistakeReview || { mistakes: [], severity: undefined, avoidable: false, reflection: "" });
     setScreenshot(trade.screenshot || null);
     setAnnotations(trade.annotations ? JSON.parse(trade.annotations) : []);
+    setTimeline(trade.timeline || []);
     setEditing(false);
   };
 
