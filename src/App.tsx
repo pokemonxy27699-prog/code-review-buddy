@@ -11,6 +11,7 @@ import CapitalFlows from "@/pages/CapitalFlows";
 import Analytics from "@/pages/Analytics";
 import Reports from "@/pages/Reports";
 import TradingPlans from "@/pages/TradingPlans";
+import DailyJournal from "@/pages/DailyJournal";
 import SettingsPage from "@/pages/Settings";
 import NotFound from "@/pages/NotFound";
 
