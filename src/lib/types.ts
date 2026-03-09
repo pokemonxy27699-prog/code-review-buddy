@@ -104,3 +104,20 @@ export interface TradingPlan {
   createdAt: string;
   updatedAt: string;
 }
+
+export type RuleCategory = "Risk" | "Execution" | "Psychology" | "Process";
+
+export interface TradingRule {
+  id: string;
+  title: string;
+  category: RuleCategory;
+  description: string;
+  active: boolean;
+  severityWeight: number; // 1-3
+}
+
+export interface RuleAdherence {
+  ruleId: string;
+  followed: boolean;
+  note?: string;
+}
