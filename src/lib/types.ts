@@ -57,6 +57,7 @@ export interface Trade {
   screenshot?: string;
   annotations?: string;
   timeline?: TimelineEvent[];
+  ruleAdherence?: RuleAdherence[];
 }
 
 export interface ReviewTemplate {

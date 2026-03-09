@@ -245,6 +245,14 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
               />
             </TabsContent>
 
+            <TabsContent value="rules" className="mt-0 focus-visible:ring-0">
+              <RulesTab
+                adherence={ruleAdherence}
+                editing={editing}
+                onChange={setRuleAdherence}
+              />
+            </TabsContent>
+
             <TabsContent value="screenshot" className="mt-0 focus-visible:ring-0">
               <ScreenshotTab
                 screenshot={screenshot}
