@@ -14,6 +14,7 @@ import TradingPlans from "@/pages/TradingPlans";
 import DailyJournal from "@/pages/DailyJournal";
 import SettingsPage from "@/pages/Settings";
 import Insights from "@/pages/Insights";
+import Scorecard from "@/pages/Scorecard";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
