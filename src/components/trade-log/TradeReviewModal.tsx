@@ -53,6 +53,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
       setScreenshot(trade.screenshot || null);
       setAnnotations(trade.annotations ? JSON.parse(trade.annotations) : []);
       setTimeline(trade.timeline || []);
+      setRuleAdherence(trade.ruleAdherence || []);
       setEditing(false);
       setActiveTab("overview");
     }
