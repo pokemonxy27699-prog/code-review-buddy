@@ -20,6 +20,7 @@ const navItems = [
   { to: "/journal", icon: NotebookPen, label: "Daily Journal" },
   { to: "/plans", icon: BookOpen, label: "Trading Plans" },
   { to: "/insights", icon: Lightbulb, label: "Insights" },
+  { to: "/scorecard", icon: Shield, label: "Scorecard" },
   { to: "/settings", icon: Settings, label: "Settings" },
 ];
 
