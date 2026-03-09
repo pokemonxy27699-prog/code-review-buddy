@@ -67,7 +67,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
         onSave(trade.id, { journal, mistakeReview, screenshot, annotations: JSON.stringify(annotations), timeline, ruleAdherence });
       }
     }, 1000);
-  }, [trade, editing, journal, mistakeReview, screenshot, annotations, timeline, onSave]);
+  }, [trade, editing, journal, mistakeReview, screenshot, annotations, timeline, ruleAdherence, onSave]);
 
   useEffect(() => {
     if (editing) scheduleAutosave();
