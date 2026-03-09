@@ -34,6 +34,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+  const [ruleAdherence, setRuleAdherence] = useState<RuleAdherence[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
