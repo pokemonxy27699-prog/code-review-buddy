@@ -133,6 +133,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
     { value: "overview", label: "Overview", icon: LayoutDashboard },
     { value: "notes", label: "Notes", icon: FileText },
     { value: "mistakes", label: "Mistakes", icon: ShieldAlert },
+    { value: "rules", label: "Rules", icon: Shield },
     { value: "screenshot", label: "Screenshot", icon: Image },
     { value: "replay", label: "Replay", icon: Play },
   ];
