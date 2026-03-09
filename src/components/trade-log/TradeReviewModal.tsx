@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Trade, TradeJournal, MistakeReview, TimelineEvent } from "@/lib/types";
+import { Trade, TradeJournal, MistakeReview, TimelineEvent, RuleAdherence } from "@/lib/types";
 import { useTags } from "@/store/trades";
 import {
   Dialog,
@@ -8,12 +8,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Pencil, Eye, LayoutDashboard, FileText, ShieldAlert, Image, Play, X } from "lucide-react";
+import { Pencil, Eye, LayoutDashboard, FileText, ShieldAlert, Image, Play, X, Shield } from "lucide-react";
 import OverviewTab from "./tabs/OverviewTab";
 import NotesTab from "./tabs/NotesTab";
 import MistakesTab from "./tabs/MistakesTab";
 import ScreenshotTab, { type Annotation } from "./tabs/ScreenshotTab";
 import ReplayTab from "./tabs/ReplayTab";
+import RulesTab from "./tabs/RulesTab";
 
 interface Props {
   trade: Trade | null;
@@ -33,6 +34,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+  const [ruleAdherence, setRuleAdherence] = useState<RuleAdherence[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -51,6 +53,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
       setScreenshot(trade.screenshot || null);
       setAnnotations(trade.annotations ? JSON.parse(trade.annotations) : []);
       setTimeline(trade.timeline || []);
+      setRuleAdherence(trade.ruleAdherence || []);
       setEditing(false);
       setActiveTab("overview");
     }
@@ -61,10 +64,10 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     autosaveTimer.current = setTimeout(() => {
       if (trade && editing) {
-        onSave(trade.id, { journal, mistakeReview, screenshot, annotations: JSON.stringify(annotations), timeline });
+        onSave(trade.id, { journal, mistakeReview, screenshot, annotations: JSON.stringify(annotations), timeline, ruleAdherence });
       }
     }, 1000);
-  }, [trade, editing, journal, mistakeReview, screenshot, annotations, timeline, onSave]);
+  }, [trade, editing, journal, mistakeReview, screenshot, annotations, timeline, ruleAdherence, onSave]);
 
   useEffect(() => {
     if (editing) scheduleAutosave();
@@ -100,6 +103,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
       screenshot,
       annotations: JSON.stringify(annotations),
       timeline,
+      ruleAdherence,
       mistake: (mistakeReview.mistakes?.[0] as Trade["mistake"]) || "None",
     });
     setEditing(false);
@@ -114,6 +118,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
     setScreenshot(trade.screenshot || null);
     setAnnotations(trade.annotations ? JSON.parse(trade.annotations) : []);
     setTimeline(trade.timeline || []);
+    setRuleAdherence(trade.ruleAdherence || []);
     setEditing(false);
   };
 
@@ -128,6 +133,7 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
     { value: "overview", label: "Overview", icon: LayoutDashboard },
     { value: "notes", label: "Notes", icon: FileText },
     { value: "mistakes", label: "Mistakes", icon: ShieldAlert },
+    { value: "rules", label: "Rules", icon: Shield },
     { value: "screenshot", label: "Screenshot", icon: Image },
     { value: "replay", label: "Replay", icon: Play },
   ];
@@ -236,6 +242,14 @@ export default function TradeReviewModal({ trade, onClose, onSave }: Props) {
                 mistakeOptions={cats.mistakes}
                 editing={editing}
                 onChange={setMistakeReview}
+              />
+            </TabsContent>
+
+            <TabsContent value="rules" className="mt-0 focus-visible:ring-0">
+              <RulesTab
+                adherence={ruleAdherence}
+                editing={editing}
+                onChange={setRuleAdherence}
               />
             </TabsContent>
 

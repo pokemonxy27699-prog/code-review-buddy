@@ -14,6 +14,7 @@ import TradingPlans from "@/pages/TradingPlans";
 import DailyJournal from "@/pages/DailyJournal";
 import SettingsPage from "@/pages/Settings";
 import Insights from "@/pages/Insights";
+import Scorecard from "@/pages/Scorecard";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/journal" element={<DailyJournal />} />
             <Route path="/plans" element={<TradingPlans />} />
             <Route path="/insights" element={<Insights />} />
+            <Route path="/scorecard" element={<Scorecard />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
