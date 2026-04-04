@@ -74,6 +74,7 @@ export default function TradeLog() {
   const [detailTrade, setDetailTrade] = useState<Trade | null>(null);
   const [density, setDensity] = useState<Density>("comfortable");
   const [deleteTarget, setDeleteTarget] = useState<Trade | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const sorted = useMemo(() => {
     const result = [...trades];
