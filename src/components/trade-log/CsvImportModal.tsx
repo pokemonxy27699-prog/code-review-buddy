@@ -23,6 +23,7 @@ import {
   csvTradesToAppTrades,
   findDuplicates,
   ParsedCsvTrade,
+  ParseResult,
 } from "@/lib/csv-parser";
 import { Trade } from "@/lib/types";
 
