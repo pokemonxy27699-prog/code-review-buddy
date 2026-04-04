@@ -67,6 +67,7 @@ export default function TradeLog() {
   const { data: trades = [], isLoading, isError, error } = useTrades(filters);
   const updateTrade = useUpdateTrade();
   const deleteTrade = useDeleteTrade();
+  const createTrade = useCreateTrade();
   const [visibleCols, setVisibleCols] = useState<ColumnKey[]>(loadVisibleColumns);
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortAsc, setSortAsc] = useState(false);
