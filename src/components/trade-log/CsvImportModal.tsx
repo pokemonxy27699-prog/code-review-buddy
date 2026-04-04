@@ -195,6 +195,12 @@ export default function CsvImportModal({
 
         {step === "preview" && (
           <>
+            {parseWarnings.length > 0 && (
+              <div className="shrink-0 rounded-lg bg-warning/10 border border-warning/30 px-3 py-2 text-xs text-warning flex items-start gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <div>{parseWarnings.join(" ")}</div>
+              </div>
+            )}
             <div className="shrink-0 flex items-center justify-between gap-3 py-2 flex-wrap">
               <div className="flex items-center gap-2 text-sm">
                 <FileText className="h-4 w-4 text-muted-foreground" />
