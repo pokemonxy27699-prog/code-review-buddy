@@ -213,6 +213,14 @@ export default function TradeLog() {
             variant="outline"
             size="sm"
             className="h-8 text-xs gap-1 border-border/50"
+            onClick={() => setImportOpen(true)}
+          >
+            <Upload className="h-3 w-3" /> Import CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs gap-1 border-border/50"
             onClick={() => exportTradesToCsv(selected.size > 0 ? sorted.filter((t) => selected.has(t.id)) : sorted)}
           >
             <Download className="h-3 w-3" /> Export{selected.size > 0 ? ` (${selected.size})` : ""}
