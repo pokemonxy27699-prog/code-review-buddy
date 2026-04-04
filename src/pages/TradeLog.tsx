@@ -387,6 +387,17 @@ export default function TradeLog() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CsvImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        existingTrades={trades}
+        onImport={(newTrades) => {
+          for (const t of newTrades) {
+            createTrade.mutate(t);
+          }
+        }}
+      />
     </div>
   );
 }
