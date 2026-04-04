@@ -59,7 +59,9 @@ export default function CsvImportModal({
     setDupes(new Set());
     setSelected(new Set());
     setImporting(false);
+    setParsing(false);
     setError(null);
+    setParseWarnings([]);
     setFileName("");
   }, []);
 
