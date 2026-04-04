@@ -47,7 +47,9 @@ export default function CsvImportModal({
   const [dupes, setDupes] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [importing, setImporting] = useState(false);
+  const [parsing, setParsing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [parseWarnings, setParseWarnings] = useState<string[]>([]);
   const [fileName, setFileName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
