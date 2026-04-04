@@ -72,24 +72,36 @@ export default function CsvImportModal({
 
   const handleFile = async (file: File) => {
     setError(null);
+    setParseWarnings([]);
     setFileName(file.name);
+    setParsing(true);
     try {
       const text = await file.text();
-      const results = parseCryptoComCsv(text);
-      if (results.length === 0) {
-        setError("No trading rows found in this file. Make sure it's a Crypto.com OEX_TRANSACTION export.");
+      const result = parseCryptoComCsv(text);
+      if (result.trades.length === 0) {
+        setError(
+          result.errors.length > 0
+            ? result.errors.join(" ")
+            : "No trading rows found in this file. Make sure it's a Crypto.com OEX_TRANSACTION export."
+        );
+        setParsing(false);
         return;
       }
-      const duplicates = findDuplicates(results, existingTrades);
+      if (result.errors.length > 0) {
+        setParseWarnings(result.errors);
+      }
+      const duplicates = findDuplicates(result.trades, existingTrades);
       const newIds = new Set(
-        results.filter((r) => !duplicates.has(r.tradeMatchId)).map((r) => r.tradeMatchId)
+        result.trades.filter((r) => !duplicates.has(r.tradeMatchId)).map((r) => r.tradeMatchId)
       );
-      setParsed(results);
+      setParsed(result.trades);
       setDupes(duplicates);
       setSelected(newIds);
       setStep("preview");
-    } catch {
+    } catch (e) {
       setError("Failed to parse CSV file. Please check the format.");
+    } finally {
+      setParsing(false);
     }
   };
 
