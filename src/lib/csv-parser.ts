@@ -48,30 +48,51 @@ function parseCSVLine(line: string): string[] {
   return result;
 }
 
-export function parseCryptoComCsv(text: string): ParsedCsvTrade[] {
+export interface ParseResult {
+  trades: ParsedCsvTrade[];
+  totalRows: number;
+  tradingRows: number;
+  skippedGroups: number;
+  errors: string[];
+}
+
+function isValidSide(val: string): val is "BUY" | "SELL" {
+  return val === "BUY" || val === "SELL";
+}
+
+export function parseCryptoComCsv(text: string): ParseResult {
+  const errors: string[] = [];
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
 
-  // Skip 3 non-data lines, line 4 is header
-  if (lines.length < 5) return [];
+  if (lines.length < 5) {
+    return { trades: [], totalRows: 0, tradingRows: 0, skippedGroups: 0, errors: ["File has fewer than 5 lines — not a valid Crypto.com export."] };
+  }
 
   const headerLine = lines[3];
   const headers = parseCSVLine(headerLine);
+
+  if (!headers.includes("Journal Type") || !headers.includes("Trade Match ID")) {
+    return { trades: [], totalRows: 0, tradingRows: 0, skippedGroups: 0, errors: ["Header row missing expected columns. Ensure this is an OEX_TRANSACTION.csv export."] };
+  }
+
   const dataLines = lines.slice(4);
+  let parseErrors = 0;
 
-  const rows: RawRow[] = dataLines
-    .map((line) => {
-      const vals = parseCSVLine(line);
-      if (vals.length < headers.length) return null;
-      const obj: Record<string, string> = {};
-      headers.forEach((h, i) => (obj[h] = vals[i] ?? ""));
-      return obj as unknown as RawRow;
-    })
-    .filter(Boolean) as RawRow[];
+  const rows: RawRow[] = [];
+  for (const line of dataLines) {
+    const vals = parseCSVLine(line);
+    if (vals.length < headers.length) { parseErrors++; continue; }
+    const obj: Record<string, string> = {};
+    headers.forEach((h, i) => (obj[h] = vals[i] ?? ""));
+    rows.push(obj as unknown as RawRow);
+  }
 
-  // Filter TRADING only
+  if (parseErrors > 0) {
+    errors.push(`${parseErrors} row(s) skipped due to column count mismatch.`);
+  }
+
   const tradingRows = rows.filter((r) => r["Journal Type"] === "TRADING");
 
-  // Group by Trade Match ID
   const groups = new Map<string, RawRow[]>();
   for (const row of tradingRows) {
     const key = row["Trade Match ID"];
@@ -82,18 +103,29 @@ export function parseCryptoComCsv(text: string): ParsedCsvTrade[] {
   }
 
   const trades: ParsedCsvTrade[] = [];
+  let skippedGroups = 0;
 
-  for (const [tradeMatchId, rows] of groups) {
-    // Each group has 2 rows: one crypto, one USD_Stable_Coin
-    const cryptoRow = rows.find((r) => r.Instrument !== "USD_Stable_Coin");
-    const usdRow = rows.find((r) => r.Instrument === "USD_Stable_Coin");
+  for (const [tradeMatchId, groupRows] of groups) {
+    const cryptoRow = groupRows.find((r) => r.Instrument !== "USD_Stable_Coin");
+    const usdRow = groupRows.find((r) => r.Instrument === "USD_Stable_Coin");
 
-    if (!cryptoRow) continue;
+    if (!cryptoRow) { skippedGroups++; continue; }
+
+    // Get side from crypto row's Side field; fallback to Taker Side only if valid
+    let side = cryptoRow.Side?.trim();
+    if (!isValidSide(side ?? "")) {
+      side = cryptoRow["Taker Side"]?.trim();
+    }
+    if (!isValidSide(side ?? "")) {
+      skippedGroups++;
+      continue;
+    }
 
     const quantity = Math.abs(parseFloat(cryptoRow["Transaction Quantity"]) || 0);
+    if (quantity === 0) { skippedGroups++; continue; }
+
     const value = usdRow ? Math.abs(parseFloat(usdRow["Transaction Quantity"]) || 0) : 0;
     const price = quantity > 0 ? value / quantity : 0;
-    const side = cryptoRow.Side === "BUY" ? "BUY" : "SELL";
 
     trades.push({
       timestamp: cryptoRow["Time (UTC)"],
@@ -108,9 +140,12 @@ export function parseCryptoComCsv(text: string): ParsedCsvTrade[] {
     });
   }
 
-  // Sort by timestamp desc
+  if (skippedGroups > 0) {
+    errors.push(`${skippedGroups} trade group(s) skipped (missing crypto row or valid side).`);
+  }
+
   trades.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-  return trades;
+  return { trades, totalRows: dataLines.length, tradingRows: tradingRows.length, skippedGroups, errors };
 }
 
 export function csvTradesToAppTrades(parsed: ParsedCsvTrade[]): Trade[] {

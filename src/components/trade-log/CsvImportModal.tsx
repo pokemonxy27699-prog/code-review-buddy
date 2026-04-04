@@ -23,6 +23,7 @@ import {
   csvTradesToAppTrades,
   findDuplicates,
   ParsedCsvTrade,
+  ParseResult,
 } from "@/lib/csv-parser";
 import { Trade } from "@/lib/types";
 
@@ -46,7 +47,9 @@ export default function CsvImportModal({
   const [dupes, setDupes] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [importing, setImporting] = useState(false);
+  const [parsing, setParsing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [parseWarnings, setParseWarnings] = useState<string[]>([]);
   const [fileName, setFileName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -56,7 +59,9 @@ export default function CsvImportModal({
     setDupes(new Set());
     setSelected(new Set());
     setImporting(false);
+    setParsing(false);
     setError(null);
+    setParseWarnings([]);
     setFileName("");
   }, []);
 
@@ -67,24 +72,36 @@ export default function CsvImportModal({
 
   const handleFile = async (file: File) => {
     setError(null);
+    setParseWarnings([]);
     setFileName(file.name);
+    setParsing(true);
     try {
       const text = await file.text();
-      const results = parseCryptoComCsv(text);
-      if (results.length === 0) {
-        setError("No trading rows found in this file. Make sure it's a Crypto.com OEX_TRANSACTION export.");
+      const result = parseCryptoComCsv(text);
+      if (result.trades.length === 0) {
+        setError(
+          result.errors.length > 0
+            ? result.errors.join(" ")
+            : "No trading rows found in this file. Make sure it's a Crypto.com OEX_TRANSACTION export."
+        );
+        setParsing(false);
         return;
       }
-      const duplicates = findDuplicates(results, existingTrades);
+      if (result.errors.length > 0) {
+        setParseWarnings(result.errors);
+      }
+      const duplicates = findDuplicates(result.trades, existingTrades);
       const newIds = new Set(
-        results.filter((r) => !duplicates.has(r.tradeMatchId)).map((r) => r.tradeMatchId)
+        result.trades.filter((r) => !duplicates.has(r.tradeMatchId)).map((r) => r.tradeMatchId)
       );
-      setParsed(results);
+      setParsed(result.trades);
       setDupes(duplicates);
       setSelected(newIds);
       setStep("preview");
-    } catch {
+    } catch (e) {
       setError("Failed to parse CSV file. Please check the format.");
+    } finally {
+      setParsing(false);
     }
   };
 
@@ -137,15 +154,23 @@ export default function CsvImportModal({
         {step === "upload" && (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 py-8">
             <div
-              className="w-full border-2 border-dashed border-border/60 rounded-xl p-10 flex flex-col items-center gap-3 cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-colors"
+              className={`w-full border-2 border-dashed border-border/60 rounded-xl p-10 flex flex-col items-center gap-3 transition-colors ${
+                parsing ? "opacity-60 pointer-events-none" : "cursor-pointer hover:border-primary/40 hover:bg-primary/5"
+              }`}
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
-              onClick={() => fileRef.current?.click()}
+              onClick={() => !parsing && fileRef.current?.click()}
             >
               <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center">
-                <Upload className="h-6 w-6 text-muted-foreground" />
+                {parsing ? (
+                  <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
+                ) : (
+                  <Upload className="h-6 w-6 text-muted-foreground" />
+                )}
               </div>
-              <p className="text-sm font-medium">Drop CSV file here or click to browse</p>
+              <p className="text-sm font-medium">
+                {parsing ? "Parsing CSV…" : "Drop CSV file here or click to browse"}
+              </p>
               <p className="text-xs text-muted-foreground">Accepts Crypto.com OEX_TRANSACTION.csv</p>
             </div>
             <input
@@ -161,8 +186,8 @@ export default function CsvImportModal({
             />
             {error && (
               <div className="flex items-center gap-2 text-destructive text-sm">
-                <AlertTriangle className="h-4 w-4" />
-                {error}
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>{error}</span>
               </div>
             )}
           </div>
@@ -170,6 +195,12 @@ export default function CsvImportModal({
 
         {step === "preview" && (
           <>
+            {parseWarnings.length > 0 && (
+              <div className="shrink-0 rounded-lg bg-warning/10 border border-warning/30 px-3 py-2 text-xs text-warning flex items-start gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <div>{parseWarnings.join(" ")}</div>
+              </div>
+            )}
             <div className="shrink-0 flex items-center justify-between gap-3 py-2 flex-wrap">
               <div className="flex items-center gap-2 text-sm">
                 <FileText className="h-4 w-4 text-muted-foreground" />
