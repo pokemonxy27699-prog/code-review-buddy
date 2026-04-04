@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Trade } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { loadVisibleColumns, ColumnKey, ALL_COLUMNS } from "@/lib/trade-store";
-import { useTrades, useFilters, useUpdateTrade, useDeleteTrade } from "@/store/trades";
+import { useTrades, useFilters, useUpdateTrade, useDeleteTrade, useCreateTrade } from "@/store/trades";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,12 +24,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown, Star, Download, Clock, Loader2, AlertCircle, Inbox, MoreHorizontal, Pencil, Copy, Trash2, Rows3, Rows4 } from "lucide-react";
+import { ArrowUpDown, Star, Download, Clock, Loader2, AlertCircle, Inbox, MoreHorizontal, Pencil, Copy, Trash2, Rows3, Rows4, Upload } from "lucide-react";
 import FilterBar from "@/components/trade-log/FilterBar";
 import ColumnPicker from "@/components/trade-log/ColumnPicker";
 import TradeDetailDrawer from "@/components/trade-log/TradeDetailDrawer";
 import TradeReviewModal from "@/components/trade-log/TradeReviewModal";
 import { exportTradesToCsv } from "@/lib/trade-store";
+import CsvImportModal from "@/components/trade-log/CsvImportModal";
 
 type SortKey = keyof Trade;
 type Density = "comfortable" | "compact";
@@ -66,6 +67,7 @@ export default function TradeLog() {
   const { data: trades = [], isLoading, isError, error } = useTrades(filters);
   const updateTrade = useUpdateTrade();
   const deleteTrade = useDeleteTrade();
+  const createTrade = useCreateTrade();
   const [visibleCols, setVisibleCols] = useState<ColumnKey[]>(loadVisibleColumns);
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortAsc, setSortAsc] = useState(false);
@@ -73,6 +75,7 @@ export default function TradeLog() {
   const [detailTrade, setDetailTrade] = useState<Trade | null>(null);
   const [density, setDensity] = useState<Density>("comfortable");
   const [deleteTarget, setDeleteTarget] = useState<Trade | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const sorted = useMemo(() => {
     const result = [...trades];
@@ -206,6 +209,14 @@ export default function TradeLog() {
             title={density === "comfortable" ? "Switch to compact" : "Switch to comfortable"}
           >
             {density === "comfortable" ? <Rows4 className="h-3 w-3" /> : <Rows3 className="h-3 w-3" />}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs gap-1 border-border/50"
+            onClick={() => setImportOpen(true)}
+          >
+            <Upload className="h-3 w-3" /> Import CSV
           </Button>
           <Button
             variant="outline"
@@ -376,6 +387,17 @@ export default function TradeLog() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CsvImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        existingTrades={trades}
+        onImport={(newTrades) => {
+          for (const t of newTrades) {
+            createTrade.mutate(t);
+          }
+        }}
+      />
     </div>
   );
 }
