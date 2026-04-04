@@ -30,6 +30,7 @@ import ColumnPicker from "@/components/trade-log/ColumnPicker";
 import TradeDetailDrawer from "@/components/trade-log/TradeDetailDrawer";
 import TradeReviewModal from "@/components/trade-log/TradeReviewModal";
 import { exportTradesToCsv } from "@/lib/trade-store";
+import CsvImportModal from "@/components/trade-log/CsvImportModal";
 
 type SortKey = keyof Trade;
 type Density = "comfortable" | "compact";
