@@ -154,15 +154,23 @@ export default function CsvImportModal({
         {step === "upload" && (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 py-8">
             <div
-              className="w-full border-2 border-dashed border-border/60 rounded-xl p-10 flex flex-col items-center gap-3 cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-colors"
+              className={`w-full border-2 border-dashed border-border/60 rounded-xl p-10 flex flex-col items-center gap-3 transition-colors ${
+                parsing ? "opacity-60 pointer-events-none" : "cursor-pointer hover:border-primary/40 hover:bg-primary/5"
+              }`}
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
-              onClick={() => fileRef.current?.click()}
+              onClick={() => !parsing && fileRef.current?.click()}
             >
               <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center">
-                <Upload className="h-6 w-6 text-muted-foreground" />
+                {parsing ? (
+                  <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
+                ) : (
+                  <Upload className="h-6 w-6 text-muted-foreground" />
+                )}
               </div>
-              <p className="text-sm font-medium">Drop CSV file here or click to browse</p>
+              <p className="text-sm font-medium">
+                {parsing ? "Parsing CSV…" : "Drop CSV file here or click to browse"}
+              </p>
               <p className="text-xs text-muted-foreground">Accepts Crypto.com OEX_TRANSACTION.csv</p>
             </div>
             <input
@@ -178,8 +186,8 @@ export default function CsvImportModal({
             />
             {error && (
               <div className="flex items-center gap-2 text-destructive text-sm">
-                <AlertTriangle className="h-4 w-4" />
-                {error}
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>{error}</span>
               </div>
             )}
           </div>
