@@ -24,7 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown, Star, Download, Clock, Loader2, AlertCircle, Inbox, MoreHorizontal, Pencil, Copy, Trash2, Rows3, Rows4 } from "lucide-react";
+import { ArrowUpDown, Star, Download, Clock, Loader2, AlertCircle, Inbox, MoreHorizontal, Pencil, Copy, Trash2, Rows3, Rows4, Upload } from "lucide-react";
 import FilterBar from "@/components/trade-log/FilterBar";
 import ColumnPicker from "@/components/trade-log/ColumnPicker";
 import TradeDetailDrawer from "@/components/trade-log/TradeDetailDrawer";
