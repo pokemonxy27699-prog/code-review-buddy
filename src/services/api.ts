@@ -41,7 +41,7 @@ export async function testConnection(): Promise<{ status: string }> {
 }
 
 // ── Trades ──
-export interface CreateTradePayload extends Omit<Trade, "id"> {}
+export interface CreateTradePayload extends Omit<Trade, "id"> { id?: string; }
 
 function filtersToParams(f: TradeFilters): string {
   const params = new URLSearchParams();
