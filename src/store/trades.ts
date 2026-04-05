@@ -205,7 +205,7 @@ export function useCreateTrade() {
         return apiCreateTrade(payload);
       }
       const trades = loadTrades();
-      const newTrade: Trade = { ...payload, id: `t-${Date.now()}` };
+      const newTrade: Trade = { ...payload, id: payload.id || `t-${Date.now()}` };
       trades.unshift(newTrade);
       saveTrades(trades);
       return newTrade;

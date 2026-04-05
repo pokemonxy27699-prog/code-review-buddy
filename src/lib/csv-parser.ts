@@ -151,14 +151,13 @@ export function parseCryptoComCsv(text: string): ParseResult {
 export function csvTradesToAppTrades(parsed: ParsedCsvTrade[]): Trade[] {
   return parsed.map((p) => ({
     id: `csv-${p.tradeMatchId}`,
-    date: p.date,
+    date: new Date(p.timestamp).toISOString(),
     instrument: p.symbol,
     side: p.side,
     quantity: p.quantity,
     price: p.price,
     fees: 0,
     pnl: 0,
-    notes: `Imported from Crypto.com | Order: ${p.orderId} | Value: $${p.value.toLocaleString()}`,
     tags: ["crypto.com-import"],
   }));
 }

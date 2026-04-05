@@ -32,10 +32,16 @@ export function loadTrades(): Trade[] {
     const raw = localStorage.getItem("trades");
     if (raw) return JSON.parse(raw);
   } catch {}
-  // seed once
-  const trades = [...mockTrades];
-  localStorage.setItem("trades", JSON.stringify(trades));
-  return trades;
+  return [];
+}
+
+export function clearAllTrades() {
+  localStorage.removeItem("trades");
+}
+
+export function hasDemoTrades(): boolean {
+  const trades = loadTrades();
+  return trades.some((t) => t.id.startsWith("t-") && !t.id.startsWith("t-1"));
 }
 
 export function saveTrades(trades: Trade[]) {
