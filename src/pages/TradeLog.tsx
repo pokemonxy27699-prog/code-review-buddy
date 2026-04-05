@@ -3,6 +3,7 @@ import { Trade } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { loadVisibleColumns, ColumnKey, ALL_COLUMNS, clearAllTrades, hasDemoTrades } from "@/lib/trade-store";
 import { useTrades, useFilters, useUpdateTrade, useDeleteTrade, useCreateTrade } from "@/store/trades";
+import { useQueryClient } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
