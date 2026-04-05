@@ -147,11 +147,11 @@ export default function TradeLog() {
           </span>
         );
       case "setup":
-        return <span className="text-xs text-muted-foreground">{t.setup}</span>;
+        return t.setup ? <span className="text-xs text-muted-foreground">{t.setup}</span> : <span className="text-xs text-muted-foreground/40">—</span>;
       case "rating":
-        return <StarRating rating={t.rating || 0} />;
+        return t.rating ? <StarRating rating={t.rating} /> : <span className="text-xs text-muted-foreground/40">—</span>;
       case "rMultiple":
-        return <span className={`font-mono text-sm ${(t.rMultiple || 0) >= 0 ? "text-success" : "text-destructive"}`}>{t.rMultiple}R</span>;
+        return t.rMultiple != null ? <span className={`font-mono text-sm ${t.rMultiple >= 0 ? "text-success" : "text-destructive"}`}>{t.rMultiple}R</span> : <span className="text-xs text-muted-foreground/40">—</span>;
       case "pnl":
         return (
           <span className={`font-mono text-sm font-semibold ${t.pnl >= 0 ? "text-success" : "text-destructive"}`}>
@@ -159,9 +159,9 @@ export default function TradeLog() {
           </span>
         );
       case "emotion":
-        return <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">{t.emotion}</Badge>;
+        return t.emotion ? <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">{t.emotion}</Badge> : <span className="text-xs text-muted-foreground/40">—</span>;
       case "mistake":
-        return <Badge variant={t.mistake === "None" ? "outline" : "destructive"} className="text-[10px]">{t.mistake}</Badge>;
+        return t.mistake ? <Badge variant={t.mistake === "None" ? "outline" : "destructive"} className="text-[10px]">{t.mistake}</Badge> : <span className="text-xs text-muted-foreground/40">—</span>;
       case "quantity":
         return <span className="font-mono text-xs">{t.quantity}</span>;
       case "price":
