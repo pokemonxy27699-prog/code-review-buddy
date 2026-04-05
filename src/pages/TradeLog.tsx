@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
 import { Trade } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { loadVisibleColumns, ColumnKey, ALL_COLUMNS } from "@/lib/trade-store";
+import { loadVisibleColumns, ColumnKey, ALL_COLUMNS, clearAllTrades, hasDemoTrades } from "@/lib/trade-store";
 import { useTrades, useFilters, useUpdateTrade, useDeleteTrade, useCreateTrade } from "@/store/trades";
+import { useQueryClient } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,7 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown, Star, Download, Clock, Loader2, AlertCircle, Inbox, MoreHorizontal, Pencil, Copy, Trash2, Rows3, Rows4, Upload } from "lucide-react";
+import { ArrowUpDown, Star, Download, Clock, Loader2, AlertCircle, Inbox, MoreHorizontal, Pencil, Copy, Trash2, Rows3, Rows4, Upload, XCircle } from "lucide-react";
 import FilterBar from "@/components/trade-log/FilterBar";
 import ColumnPicker from "@/components/trade-log/ColumnPicker";
 import TradeDetailDrawer from "@/components/trade-log/TradeDetailDrawer";
@@ -76,6 +77,9 @@ export default function TradeLog() {
   const [density, setDensity] = useState<Density>("comfortable");
   const [deleteTarget, setDeleteTarget] = useState<Trade | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [clearConfirm, setClearConfirm] = useState(false);
+  const queryClient = useQueryClient();
+  const showClearDemo = hasDemoTrades();
 
   const sorted = useMemo(() => {
     const result = [...trades];
@@ -143,11 +147,11 @@ export default function TradeLog() {
           </span>
         );
       case "setup":
-        return <span className="text-xs text-muted-foreground">{t.setup}</span>;
+        return t.setup ? <span className="text-xs text-muted-foreground">{t.setup}</span> : <span className="text-xs text-muted-foreground/40">—</span>;
       case "rating":
-        return <StarRating rating={t.rating || 0} />;
+        return t.rating ? <StarRating rating={t.rating} /> : <span className="text-xs text-muted-foreground/40">—</span>;
       case "rMultiple":
-        return <span className={`font-mono text-sm ${(t.rMultiple || 0) >= 0 ? "text-success" : "text-destructive"}`}>{t.rMultiple}R</span>;
+        return t.rMultiple != null ? <span className={`font-mono text-sm ${t.rMultiple >= 0 ? "text-success" : "text-destructive"}`}>{t.rMultiple}R</span> : <span className="text-xs text-muted-foreground/40">—</span>;
       case "pnl":
         return (
           <span className={`font-mono text-sm font-semibold ${t.pnl >= 0 ? "text-success" : "text-destructive"}`}>
@@ -155,9 +159,9 @@ export default function TradeLog() {
           </span>
         );
       case "emotion":
-        return <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">{t.emotion}</Badge>;
+        return t.emotion ? <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">{t.emotion}</Badge> : <span className="text-xs text-muted-foreground/40">—</span>;
       case "mistake":
-        return <Badge variant={t.mistake === "None" ? "outline" : "destructive"} className="text-[10px]">{t.mistake}</Badge>;
+        return t.mistake ? <Badge variant={t.mistake === "None" ? "outline" : "destructive"} className="text-[10px]">{t.mistake}</Badge> : <span className="text-xs text-muted-foreground/40">—</span>;
       case "quantity":
         return <span className="font-mono text-xs">{t.quantity}</span>;
       case "price":
@@ -226,6 +230,16 @@ export default function TradeLog() {
           >
             <Download className="h-3 w-3" /> Export{selected.size > 0 ? ` (${selected.size})` : ""}
           </Button>
+          {showClearDemo && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1 border-destructive/50 text-destructive hover:bg-destructive/10"
+              onClick={() => setClearConfirm(true)}
+            >
+              <XCircle className="h-3 w-3" /> Clear Demo Data
+            </Button>
+          )}
           <ColumnPicker visible={visibleCols} onChange={setVisibleCols} />
         </div>
       </div>
@@ -383,6 +397,31 @@ export default function TradeLog() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Clear demo data confirmation */}
+      <AlertDialog open={clearConfirm} onOpenChange={setClearConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear demo data?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove all local trades (demo and imported). You can re-import your CSV files afterward. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                clearAllTrades();
+                queryClient.invalidateQueries({ queryKey: ["trades"] });
+                setClearConfirm(false);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Clear All Trades
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
