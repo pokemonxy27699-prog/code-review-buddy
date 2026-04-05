@@ -402,6 +402,31 @@ export default function TradeLog() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Clear demo data confirmation */}
+      <AlertDialog open={clearConfirm} onOpenChange={setClearConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear demo data?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove all local trades (demo and imported). You can re-import your CSV files afterward. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                clearAllTrades();
+                queryClient.invalidateQueries({ queryKey: ["trades"] });
+                setClearConfirm(false);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Clear All Trades
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <CsvImportModal
         open={importOpen}
         onClose={() => setImportOpen(false)}
