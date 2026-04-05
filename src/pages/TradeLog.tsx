@@ -230,6 +230,16 @@ export default function TradeLog() {
           >
             <Download className="h-3 w-3" /> Export{selected.size > 0 ? ` (${selected.size})` : ""}
           </Button>
+          {showClearDemo && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1 border-destructive/50 text-destructive hover:bg-destructive/10"
+              onClick={() => setClearConfirm(true)}
+            >
+              <XCircle className="h-3 w-3" /> Clear Demo Data
+            </Button>
+          )}
           <ColumnPicker visible={visibleCols} onChange={setVisibleCols} />
         </div>
       </div>
