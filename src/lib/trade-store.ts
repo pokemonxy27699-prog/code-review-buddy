@@ -1,5 +1,4 @@
 import { Trade } from "./types";
-import { mockTrades } from "./mock-data";
 import { SETUPS, EMOTIONS, MISTAKES } from "./types";
 
 // ── Tag categories (user-manageable, persisted to localStorage) ──
