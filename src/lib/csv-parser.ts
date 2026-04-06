@@ -1,4 +1,5 @@
 import { Trade } from "./types";
+import { computeFifoPnl } from "./fifo-pnl";
 
 export interface ParsedCsvTrade {
   timestamp: string;
