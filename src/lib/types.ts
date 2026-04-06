@@ -39,9 +39,13 @@ export interface Trade {
   instrument: string;
   side: "BUY" | "SELL";
   quantity: number;
+  value?: number;
   price: number;
   fees: number;
   pnl: number;
+  orderId?: string;
+  tradeMatchId?: string;
+  source?: "crypto_com_csv";
   notes?: string;
   setup?: Setup;
   emotion?: Emotion;

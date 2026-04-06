@@ -5,6 +5,11 @@ interface Lot {
   remaining: number;
 }
 
+function toTimestampMs(timestamp: string): number {
+  const normalized = timestamp.includes("T") ? timestamp : timestamp.replace(" ", "T");
+  return new Date(normalized.endsWith("Z") ? normalized : `${normalized}Z`).getTime();
+}
+
 export interface FifoResult {
   tradeMatchId: string;
   realizedPnl: number;
@@ -21,7 +26,7 @@ export interface FifoResult {
 export function computeFifoPnl(trades: ParsedCsvTrade[]): Map<string, number> {
   // Sort chronologically (earliest first)
   const sorted = [...trades].sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    (a, b) => toTimestampMs(a.timestamp) - toTimestampMs(b.timestamp)
   );
 
   // Per-symbol inventory of open lots (FIFO queue)

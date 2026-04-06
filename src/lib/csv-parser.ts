@@ -13,6 +13,35 @@ export interface ParsedCsvTrade {
   tradeMatchId: string;
 }
 
+function toUtcIsoString(timestamp: string): string {
+  const normalized = timestamp.includes("T") ? timestamp : timestamp.replace(" ", "T");
+  return new Date(normalized.endsWith("Z") ? normalized : `${normalized}Z`).toISOString();
+}
+
+export function buildCsvTradeId(tradeMatchId: string, orderId?: string): string {
+  return tradeMatchId ? `csv-${tradeMatchId}` : `csv-order-${orderId ?? "unknown"}`;
+}
+
+export function tradeToParsedCsvTrade(trade: Trade): ParsedCsvTrade | null {
+  const tradeMatchId = trade.tradeMatchId ?? (trade.id.startsWith("csv-") ? trade.id.slice(4) : "");
+
+  if ((trade.source !== "crypto_com_csv" && !trade.id.startsWith("csv-")) || !tradeMatchId) {
+    return null;
+  }
+
+  return {
+    timestamp: trade.date,
+    date: trade.date.slice(0, 10),
+    symbol: trade.instrument,
+    side: trade.side,
+    quantity: trade.quantity,
+    value: trade.value ?? Math.round(trade.quantity * trade.price * 100) / 100,
+    price: trade.price,
+    orderId: trade.orderId ?? "",
+    tradeMatchId,
+  };
+}
+
 interface RawRow {
   "Journal ID": string;
   "Time (UTC)": string;
@@ -149,17 +178,23 @@ export function parseCryptoComCsv(text: string): ParseResult {
   return { trades, totalRows: dataLines.length, tradingRows: tradingRows.length, skippedGroups, errors };
 }
 
-export function csvTradesToAppTrades(parsed: ParsedCsvTrade[]): Trade[] {
-  const pnlMap = computeFifoPnl(parsed);
+export function csvTradesToAppTrades(
+  parsed: ParsedCsvTrade[],
+  pnlMap: Map<string, number> = computeFifoPnl(parsed)
+): Trade[] {
   return parsed.map((p) => ({
-    id: `csv-${p.tradeMatchId}`,
-    date: new Date(p.timestamp).toISOString(),
+    id: buildCsvTradeId(p.tradeMatchId, p.orderId),
+    date: toUtcIsoString(p.timestamp),
     instrument: p.symbol,
     side: p.side,
     quantity: p.quantity,
+    value: p.value,
     price: p.price,
     fees: 0,
     pnl: pnlMap.get(p.tradeMatchId) ?? 0,
+    orderId: p.orderId,
+    tradeMatchId: p.tradeMatchId,
+    source: "crypto_com_csv",
     tags: ["crypto.com-import"],
   }));
 }
@@ -169,9 +204,19 @@ export function findDuplicates(
   existing: Trade[]
 ): Set<string> {
   const existingIds = new Set(existing.map((t) => t.id));
+  const existingTradeMatchIds = new Set(
+    existing
+      .map((t) => t.tradeMatchId ?? (t.id.startsWith("csv-") ? t.id.slice(4) : ""))
+      .filter(Boolean)
+  );
+  const existingOrderIds = new Set(existing.map((t) => t.orderId).filter(Boolean));
   const dupes = new Set<string>();
   for (const p of parsed) {
-    if (existingIds.has(`csv-${p.tradeMatchId}`)) {
+    if (
+      existingIds.has(buildCsvTradeId(p.tradeMatchId, p.orderId)) ||
+      existingTradeMatchIds.has(p.tradeMatchId) ||
+      (!!p.orderId && existingOrderIds.has(p.orderId))
+    ) {
       dupes.add(p.tradeMatchId);
     }
   }
