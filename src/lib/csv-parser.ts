@@ -1,4 +1,5 @@
 import { Trade } from "./types";
+import { computeFifoPnl } from "./fifo-pnl";
 
 export interface ParsedCsvTrade {
   timestamp: string;
@@ -149,6 +150,7 @@ export function parseCryptoComCsv(text: string): ParseResult {
 }
 
 export function csvTradesToAppTrades(parsed: ParsedCsvTrade[]): Trade[] {
+  const pnlMap = computeFifoPnl(parsed);
   return parsed.map((p) => ({
     id: `csv-${p.tradeMatchId}`,
     date: new Date(p.timestamp).toISOString(),
@@ -157,7 +159,7 @@ export function csvTradesToAppTrades(parsed: ParsedCsvTrade[]): Trade[] {
     quantity: p.quantity,
     price: p.price,
     fees: 0,
-    pnl: 0,
+    pnl: pnlMap.get(p.tradeMatchId) ?? 0,
     tags: ["crypto.com-import"],
   }));
 }

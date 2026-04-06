@@ -114,8 +114,12 @@ export default function CsvImportModal({
 
   const handleImport = () => {
     setImporting(true);
-    const toImport = parsed.filter((p) => selected.has(p.tradeMatchId));
-    const trades = csvTradesToAppTrades(toImport);
+    // Compute FIFO P&L using ALL parsed trades, then filter to selected for import
+    const allWithPnl = csvTradesToAppTrades(parsed);
+    const selectedIds = new Set(
+      parsed.filter((p) => selected.has(p.tradeMatchId)).map((p) => `csv-${p.tradeMatchId}`)
+    );
+    const trades = allWithPnl.filter((t) => selectedIds.has(t.id));
     onImport(trades);
     setImporting(false);
     handleClose();
