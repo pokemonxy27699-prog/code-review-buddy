@@ -204,9 +204,23 @@ export function useCreateTrade() {
       if (isApiConfigured()) {
         return apiCreateTrade(payload);
       }
+
       const trades = loadTrades();
-      const newTrade: Trade = { ...payload, id: payload.id || `t-${Date.now()}` };
-      trades.unshift(newTrade);
+      const tradeId = payload.id || `t-${Date.now()}`;
+      const existingIndex = trades.findIndex(
+        (trade) =>
+          trade.id === tradeId ||
+          (!!payload.tradeMatchId && trade.tradeMatchId === payload.tradeMatchId) ||
+          (!!payload.orderId && trade.orderId === payload.orderId)
+      );
+      const newTrade: Trade = { ...(existingIndex >= 0 ? trades[existingIndex] : {}), ...payload, id: tradeId } as Trade;
+
+      if (existingIndex >= 0) {
+        trades[existingIndex] = newTrade;
+      } else {
+        trades.unshift(newTrade);
+      }
+
       saveTrades(trades);
       return newTrade;
     },

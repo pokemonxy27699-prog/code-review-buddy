@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Trade } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { loadVisibleColumns, ColumnKey, ALL_COLUMNS, clearAllTrades, hasDemoTrades } from "@/lib/trade-store";
+import { loadVisibleColumns, loadTrades, ColumnKey, ALL_COLUMNS, clearAllTrades, hasDemoTrades } from "@/lib/trade-store";
 import { useTrades, useFilters, useUpdateTrade, useDeleteTrade, useCreateTrade } from "@/store/trades";
 import { useQueryClient } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -430,7 +430,7 @@ export default function TradeLog() {
       <CsvImportModal
         open={importOpen}
         onClose={() => setImportOpen(false)}
-        existingTrades={trades}
+        existingTrades={loadTrades()}
         onImport={(newTrades) => {
           for (const t of newTrades) {
             createTrade.mutate(t);

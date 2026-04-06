@@ -19,12 +19,14 @@ import {
 } from "@/components/ui/table";
 import { Upload, FileText, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import {
+  buildCsvTradeId,
   parseCryptoComCsv,
   csvTradesToAppTrades,
   findDuplicates,
   ParsedCsvTrade,
-  ParseResult,
+  tradeToParsedCsvTrade,
 } from "@/lib/csv-parser";
+import { computeFifoPnl } from "@/lib/fifo-pnl";
 import { Trade } from "@/lib/types";
 
 interface CsvImportModalProps {
@@ -114,12 +116,27 @@ export default function CsvImportModal({
 
   const handleImport = () => {
     setImporting(true);
-    // Compute FIFO P&L using ALL parsed trades, then filter to selected for import
-    const allWithPnl = csvTradesToAppTrades(parsed);
-    const selectedIds = new Set(
-      parsed.filter((p) => selected.has(p.tradeMatchId)).map((p) => `csv-${p.tradeMatchId}`)
-    );
-    const trades = allWithPnl.filter((t) => selectedIds.has(t.id));
+    const selectedParsed = parsed.filter((p) => selected.has(p.tradeMatchId));
+    const combinedParsedById = new Map<string, ParsedCsvTrade>();
+
+    for (const trade of existingTrades) {
+      const parsedTrade = tradeToParsedCsvTrade(trade);
+      if (parsedTrade) {
+        combinedParsedById.set(
+          buildCsvTradeId(parsedTrade.tradeMatchId, parsedTrade.orderId),
+          parsedTrade
+        );
+      }
+    }
+
+    for (const trade of selectedParsed) {
+      combinedParsedById.set(buildCsvTradeId(trade.tradeMatchId, trade.orderId), trade);
+    }
+
+    const combinedParsed = Array.from(combinedParsedById.values());
+    const pnlMap = computeFifoPnl(combinedParsed);
+    const trades = csvTradesToAppTrades(selectedParsed, pnlMap);
+
     onImport(trades);
     setImporting(false);
     handleClose();
