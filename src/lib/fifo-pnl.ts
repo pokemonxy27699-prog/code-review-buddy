@@ -3,6 +3,7 @@ import { ParsedCsvTrade } from "./csv-parser";
 interface Lot {
   price: number;
   remaining: number;
+  feePerUnit: number;
 }
 
 function toTimestampMs(timestamp: string): number {
@@ -16,35 +17,32 @@ export interface FifoResult {
 }
 
 /**
- * FIFO realized P&L engine for spot trading.
+ * FIFO realized P&L engine for spot trading with fee handling.
  *
- * - BUY adds inventory lots per symbol.
+ * - BUY adds inventory lots per symbol; buy-side fees are amortized into cost basis.
  * - SELL closes against oldest BUY lots (FIFO) and computes realized P&L.
+ *   Sell-side fees reduce realized P&L for that trade.
  * - Partial lot matching is fully supported.
- * - Trades must be sorted chronologically before calling this function.
  */
 export function computeFifoPnl(trades: ParsedCsvTrade[]): Map<string, number> {
-  // Sort chronologically (earliest first)
   const sorted = [...trades].sort(
     (a, b) => toTimestampMs(a.timestamp) - toTimestampMs(b.timestamp)
   );
 
-  // Per-symbol inventory of open lots (FIFO queue)
   const inventory = new Map<string, Lot[]>();
-  // Per tradeMatchId realized P&L
   const pnlMap = new Map<string, number>();
 
   for (const trade of sorted) {
     const { symbol, side, quantity, price, tradeMatchId } = trade;
+    const fees = trade.fees ?? 0;
     const lots = inventory.get(symbol) ?? [];
 
     if (side === "BUY") {
-      // Add a new lot to inventory
-      lots.push({ price, remaining: quantity });
+      const feePerUnit = quantity > 0 ? fees / quantity : 0;
+      lots.push({ price, remaining: quantity, feePerUnit });
       inventory.set(symbol, lots);
-      pnlMap.set(tradeMatchId, 0); // BUYs have no realized P&L
+      pnlMap.set(tradeMatchId, 0);
     } else {
-      // SELL — match against oldest BUY lots
       let remaining = quantity;
       let realizedPnl = 0;
 
@@ -52,7 +50,7 @@ export function computeFifoPnl(trades: ParsedCsvTrade[]): Map<string, number> {
         const oldest = lots[0];
         const matched = Math.min(remaining, oldest.remaining);
 
-        const costBasis = matched * oldest.price;
+        const costBasis = matched * (oldest.price + oldest.feePerUnit);
         const proceeds = matched * price;
         realizedPnl += proceeds - costBasis;
 
@@ -60,15 +58,17 @@ export function computeFifoPnl(trades: ParsedCsvTrade[]): Map<string, number> {
         remaining -= matched;
 
         if (oldest.remaining <= 1e-12) {
-          lots.shift(); // lot fully consumed
+          lots.shift();
         }
       }
 
-      // If remaining > 0 after exhausting inventory, it's a "naked" sell
-      // (shouldn't happen in normal spot trading) — treat excess as zero-cost basis
+      // Naked sell fallback: treat unmatched portion as zero cost basis
       if (remaining > 0) {
         realizedPnl += remaining * price;
       }
+
+      // Sell-side fees reduce realized P&L
+      realizedPnl -= fees;
 
       inventory.set(symbol, lots);
       pnlMap.set(tradeMatchId, Math.round(realizedPnl * 100) / 100);

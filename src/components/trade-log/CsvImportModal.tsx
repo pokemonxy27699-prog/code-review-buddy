@@ -135,7 +135,10 @@ export default function CsvImportModal({
 
     const combinedParsed = Array.from(combinedParsedById.values());
     const pnlMap = computeFifoPnl(combinedParsed);
-    const trades = csvTradesToAppTrades(selectedParsed, pnlMap);
+    // Persist recalculated P&L back into ALL CSV trades (existing + newly selected),
+    // not just the newly selected ones. This ensures previously imported sells
+    // pick up refreshed realized P&L when later imports complete the ledger.
+    const trades = csvTradesToAppTrades(combinedParsed, pnlMap);
 
     onImport(trades);
     setImporting(false);
