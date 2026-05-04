@@ -9,6 +9,7 @@ export interface ParsedCsvTrade {
   quantity: number;
   value: number;
   price: number;
+  fees: number;
   orderId: string;
   tradeMatchId: string;
 }
@@ -37,6 +38,7 @@ export function tradeToParsedCsvTrade(trade: Trade): ParsedCsvTrade | null {
     quantity: trade.quantity,
     value: trade.value ?? Math.round(trade.quantity * trade.price * 100) / 100,
     price: trade.price,
+    fees: trade.fees ?? 0,
     orderId: trade.orderId ?? "",
     tradeMatchId,
   };
@@ -90,6 +92,17 @@ function isValidSide(val: string): val is "BUY" | "SELL" {
   return val === "BUY" || val === "SELL";
 }
 
+function isUsdInstrument(instrument: string): boolean {
+  const i = (instrument || "").toUpperCase();
+  return i === "USD_STABLE_COIN" || i === "USD" || i === "USDC" || i === "USDT";
+}
+
+function num(val: string | undefined): number {
+  if (!val) return 0;
+  const n = parseFloat(val);
+  return Number.isFinite(n) ? n : 0;
+}
+
 export function parseCryptoComCsv(text: string): ParseResult {
   const errors: string[] = [];
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
@@ -121,10 +134,14 @@ export function parseCryptoComCsv(text: string): ParseResult {
     errors.push(`${parseErrors} row(s) skipped due to column count mismatch.`);
   }
 
-  const tradingRows = rows.filter((r) => r["Journal Type"] === "TRADING");
+  const journalTypeOf = (r: RawRow) => (r["Journal Type"] || "").toUpperCase();
+  const isFeeRow = (r: RawRow) => journalTypeOf(r).includes("FEE");
+  const isTradingRow = (r: RawRow) => journalTypeOf(r) === "TRADING" || isFeeRow(r);
+
+  const relevantRows = rows.filter(isTradingRow);
 
   const groups = new Map<string, RawRow[]>();
-  for (const row of tradingRows) {
+  for (const row of relevantRows) {
     const key = row["Trade Match ID"];
     if (!key) continue;
     const arr = groups.get(key) ?? [];
@@ -134,48 +151,87 @@ export function parseCryptoComCsv(text: string): ParseResult {
 
   const trades: ParsedCsvTrade[] = [];
   let skippedGroups = 0;
+  let inconsistentSideGroups = 0;
+  let multiSymbolGroups = 0;
+  let zeroQtyGroups = 0;
 
   for (const [tradeMatchId, groupRows] of groups) {
-    const cryptoRow = groupRows.find((r) => r.Instrument !== "USD_Stable_Coin");
-    const usdRow = groupRows.find((r) => r.Instrument === "USD_Stable_Coin");
+    const tradingRows = groupRows.filter((r) => journalTypeOf(r) === "TRADING");
+    const feeRows = groupRows.filter(isFeeRow);
 
-    if (!cryptoRow) { skippedGroups++; continue; }
+    const cryptoRows = tradingRows.filter((r) => !isUsdInstrument(r.Instrument));
+    const usdRows = tradingRows.filter((r) => isUsdInstrument(r.Instrument));
 
-    // Get side from crypto row's Side field; fallback to Taker Side only if valid
-    let side = cryptoRow.Side?.trim();
-    if (!isValidSide(side ?? "")) {
-      side = cryptoRow["Taker Side"]?.trim();
+    if (cryptoRows.length === 0) { skippedGroups++; continue; }
+
+    // Ensure all crypto rows share the same instrument
+    const symbols = new Set(cryptoRows.map((r) => r.Instrument));
+    if (symbols.size > 1) { skippedGroups++; multiSymbolGroups++; continue; }
+    const symbol = cryptoRows[0].Instrument;
+
+    // Strict, consistent side derived from crypto rows only
+    const sides = new Set<string>();
+    for (const r of cryptoRows) {
+      const s = (r.Side || "").trim().toUpperCase();
+      if (isValidSide(s)) sides.add(s);
     }
-    if (!isValidSide(side ?? "")) {
-      skippedGroups++;
-      continue;
+    if (sides.size !== 1) { skippedGroups++; inconsistentSideGroups++; continue; }
+    const side = [...sides][0] as "BUY" | "SELL";
+
+    // Aggregate quantities and values across all fills in the group
+    const quantity = cryptoRows.reduce((s, r) => s + Math.abs(num(r["Transaction Quantity"])), 0);
+    if (quantity === 0) { skippedGroups++; zeroQtyGroups++; continue; }
+
+    let value = usdRows.reduce((s, r) => s + Math.abs(num(r["Transaction Quantity"])), 0);
+    if (value === 0) {
+      // Fall back to Transaction Cost on crypto rows when USD legs are missing
+      value = cryptoRows.reduce((s, r) => s + Math.abs(num(r["Transaction Cost"])), 0);
     }
-
-    const quantity = Math.abs(parseFloat(cryptoRow["Transaction Quantity"]) || 0);
-    if (quantity === 0) { skippedGroups++; continue; }
-
-    const value = usdRow ? Math.abs(parseFloat(usdRow["Transaction Quantity"]) || 0) : 0;
     const price = quantity > 0 ? value / quantity : 0;
 
+    // Fees: prefer dedicated fee rows; sum absolute values of either USD or crypto fee legs
+    let fees = 0;
+    for (const r of feeRows) {
+      const usd = isUsdInstrument(r.Instrument);
+      const qty = Math.abs(num(r["Transaction Quantity"]));
+      const cost = Math.abs(num(r["Transaction Cost"]));
+      // Use USD-equivalent: USD fee rows use quantity directly; non-USD fees use Transaction Cost when available
+      fees += usd ? qty : cost || qty * price;
+    }
+
+    // Pick the latest timestamp in the group as the execution time
+    const timestamp = cryptoRows
+      .map((r) => r["Time (UTC)"])
+      .filter(Boolean)
+      .sort()
+      .pop() || cryptoRows[0]["Time (UTC)"];
+    const date = cryptoRows[0]["Event Date"];
+
     trades.push({
-      timestamp: cryptoRow["Time (UTC)"],
-      date: cryptoRow["Event Date"],
-      symbol: cryptoRow.Instrument,
-      side: side as "BUY" | "SELL",
+      timestamp,
+      date,
+      symbol,
+      side,
       quantity: Math.round(quantity * 1e8) / 1e8,
       value: Math.round(value * 100) / 100,
       price: Math.round(price * 100) / 100,
-      orderId: cryptoRow["Order ID"],
+      fees: Math.round(fees * 100) / 100,
+      orderId: cryptoRows[0]["Order ID"],
       tradeMatchId,
     });
   }
 
   if (skippedGroups > 0) {
-    errors.push(`${skippedGroups} trade group(s) skipped (missing crypto row or valid side).`);
+    const parts: string[] = [];
+    if (inconsistentSideGroups > 0) parts.push(`${inconsistentSideGroups} with inconsistent or invalid side`);
+    if (multiSymbolGroups > 0) parts.push(`${multiSymbolGroups} with multiple symbols`);
+    if (zeroQtyGroups > 0) parts.push(`${zeroQtyGroups} with zero quantity`);
+    const detail = parts.length > 0 ? ` (${parts.join(", ")})` : "";
+    errors.push(`${skippedGroups} trade group(s) skipped${detail}.`);
   }
 
   trades.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-  return { trades, totalRows: dataLines.length, tradingRows: tradingRows.length, skippedGroups, errors };
+  return { trades, totalRows: dataLines.length, tradingRows: relevantRows.length, skippedGroups, errors };
 }
 
 export function csvTradesToAppTrades(
@@ -190,7 +246,7 @@ export function csvTradesToAppTrades(
     quantity: p.quantity,
     value: p.value,
     price: p.price,
-    fees: 0,
+    fees: p.fees ?? 0,
     pnl: pnlMap.get(p.tradeMatchId) ?? 0,
     orderId: p.orderId,
     tradeMatchId: p.tradeMatchId,
