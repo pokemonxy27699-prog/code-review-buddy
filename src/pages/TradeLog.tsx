@@ -32,9 +32,12 @@ import TradeDetailDrawer from "@/components/trade-log/TradeDetailDrawer";
 import TradeReviewModal from "@/components/trade-log/TradeReviewModal";
 import { exportTradesToCsv } from "@/lib/trade-store";
 import CsvImportModal from "@/components/trade-log/CsvImportModal";
+import GroupedTradeView from "@/components/trade-log/GroupedTradeView";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 type SortKey = keyof Trade;
 type Density = "comfortable" | "compact";
+type ViewMode = "execution" | "trade";
 
 function StarRating({ rating }: { rating: number }) {
   return (
