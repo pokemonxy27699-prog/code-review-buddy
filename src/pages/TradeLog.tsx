@@ -80,6 +80,7 @@ export default function TradeLog() {
   const [density, setDensity] = useState<Density>("comfortable");
   const [deleteTarget, setDeleteTarget] = useState<Trade | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("execution");
   const [clearConfirm, setClearConfirm] = useState(false);
   const queryClient = useQueryClient();
   const showClearDemo = hasDemoTrades();
