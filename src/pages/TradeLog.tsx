@@ -301,8 +301,13 @@ export default function TradeLog() {
         </div>
       )}
 
-      {/* Table */}
-      {!isLoading && !isError && sorted.length > 0 && (
+      {/* Trade View (grouped) */}
+      {!isLoading && !isError && sorted.length > 0 && viewMode === "trade" && (
+        <GroupedTradeView trades={sorted} density={density} />
+      )}
+
+      {/* Execution View (table) */}
+      {!isLoading && !isError && sorted.length > 0 && viewMode === "execution" && (
         <div className="glass-card overflow-hidden">
           <div className="overflow-x-auto">
             <Table>
