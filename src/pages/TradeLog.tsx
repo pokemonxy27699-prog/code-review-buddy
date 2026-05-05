@@ -208,6 +208,15 @@ export default function TradeLog() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <ToggleGroup
+            type="single"
+            value={viewMode}
+            onValueChange={(v) => v && setViewMode(v as ViewMode)}
+            className="border border-border/50 rounded-md"
+          >
+            <ToggleGroupItem value="execution" className="h-8 text-xs px-3">Executions</ToggleGroupItem>
+            <ToggleGroupItem value="trade" className="h-8 text-xs px-3">Trades</ToggleGroupItem>
+          </ToggleGroup>
           {/* Density toggle */}
           <Button
             variant="outline"
