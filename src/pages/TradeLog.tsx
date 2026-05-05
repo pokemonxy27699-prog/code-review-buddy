@@ -32,9 +32,12 @@ import TradeDetailDrawer from "@/components/trade-log/TradeDetailDrawer";
 import TradeReviewModal from "@/components/trade-log/TradeReviewModal";
 import { exportTradesToCsv } from "@/lib/trade-store";
 import CsvImportModal from "@/components/trade-log/CsvImportModal";
+import GroupedTradeView from "@/components/trade-log/GroupedTradeView";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 type SortKey = keyof Trade;
 type Density = "comfortable" | "compact";
+type ViewMode = "execution" | "trade";
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -77,6 +80,7 @@ export default function TradeLog() {
   const [density, setDensity] = useState<Density>("comfortable");
   const [deleteTarget, setDeleteTarget] = useState<Trade | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("execution");
   const [clearConfirm, setClearConfirm] = useState(false);
   const queryClient = useQueryClient();
   const showClearDemo = hasDemoTrades();
@@ -204,6 +208,15 @@ export default function TradeLog() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <ToggleGroup
+            type="single"
+            value={viewMode}
+            onValueChange={(v) => v && setViewMode(v as ViewMode)}
+            className="border border-border/50 rounded-md"
+          >
+            <ToggleGroupItem value="execution" className="h-8 text-xs px-3">Executions</ToggleGroupItem>
+            <ToggleGroupItem value="trade" className="h-8 text-xs px-3">Trades</ToggleGroupItem>
+          </ToggleGroup>
           {/* Density toggle */}
           <Button
             variant="outline"
@@ -288,8 +301,13 @@ export default function TradeLog() {
         </div>
       )}
 
-      {/* Table */}
-      {!isLoading && !isError && sorted.length > 0 && (
+      {/* Trade View (grouped) */}
+      {!isLoading && !isError && sorted.length > 0 && viewMode === "trade" && (
+        <GroupedTradeView trades={sorted} density={density} />
+      )}
+
+      {/* Execution View (table) */}
+      {!isLoading && !isError && sorted.length > 0 && viewMode === "execution" && (
         <div className="glass-card overflow-hidden">
           <div className="overflow-x-auto">
             <Table>
