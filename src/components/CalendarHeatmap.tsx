@@ -4,19 +4,20 @@ import { Trade } from "@/lib/types";
 
 function getMonthWeeks(year: number, month: number) {
   const weeks: { date: string; day: number; week: number }[][] = [];
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
+  // Use UTC throughout to match analytics (which slices UTC ISO strings)
+  const firstDay = new Date(Date.UTC(year, month, 1));
+  const lastDay = new Date(Date.UTC(year, month + 1, 0));
   let currentWeek: { date: string; day: number; week: number }[] = [];
 
-  for (let i = 0; i < firstDay.getDay(); i++) {
+  for (let i = 0; i < firstDay.getUTCDay(); i++) {
     currentWeek.push({ date: "", day: 0, week: 0 });
   }
 
-  for (let d = 1; d <= lastDay.getDate(); d++) {
-    const date = new Date(year, month, d);
-    const dateStr = date.toISOString().slice(0, 10);
+  for (let d = 1; d <= lastDay.getUTCDate(); d++) {
+    const date = new Date(Date.UTC(year, month, d));
+    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
     currentWeek.push({ date: dateStr, day: d, week: weeks.length });
-    if (date.getDay() === 6 || d === lastDay.getDate()) {
+    if (date.getUTCDay() === 6 || d === lastDay.getUTCDate()) {
       while (currentWeek.length < 7) {
         currentWeek.push({ date: "", day: 0, week: weeks.length });
       }
