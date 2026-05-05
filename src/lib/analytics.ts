@@ -46,13 +46,25 @@ export function getEquityCurve(trades: Trade[]) {
 
 export function getDrawdownCurve(trades: Trade[]) {
   const equity = getEquityCurve(trades);
-  let peak = -Infinity;
-  return equity.map((e) => { if (e.equity > peak) peak = e.equity; const drawdown = peak > 0 ? +((e.equity - peak) / peak * 100).toFixed(2) : 0; return { date: e.date, drawdown }; });
+  // Establish a positive baseline so drawdown % is meaningful.
+  // Use the maximum positive equity reached; if equity never goes positive,
+  // drawdown is undefined (return 0) rather than producing extreme values.
+  let peak = 0;
+  return equity.map((e) => {
+    if (e.equity > peak) peak = e.equity;
+    if (peak <= 0) return { date: e.date, drawdown: 0 };
+    const raw = ((e.equity - peak) / peak) * 100;
+    // Clamp between -100 and 0
+    const drawdown = +Math.max(-100, Math.min(0, raw)).toFixed(2);
+    return { date: e.date, drawdown };
+  });
 }
 
 export function getMaxDrawdown(trades: Trade[]) {
   const dd = getDrawdownCurve(trades);
-  return dd.length > 0 ? Math.min(...dd.map((d) => d.drawdown)) : 0;
+  if (dd.length === 0) return 0;
+  const min = Math.min(...dd.map((d) => d.drawdown));
+  return Math.max(-100, Math.min(0, min));
 }
 
 export function getCalendarHeatmap(trades: Trade[]) {
