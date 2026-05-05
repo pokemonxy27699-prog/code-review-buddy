@@ -14,7 +14,7 @@ function getMonthWeeks(year: number, month: number) {
 
   for (let d = 1; d <= lastDay.getDate(); d++) {
     const date = new Date(year, month, d);
-    const dateStr = date.toISOString().slice(0, 10);
+    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
     currentWeek.push({ date: dateStr, day: d, week: weeks.length });
     if (date.getDay() === 6 || d === lastDay.getDate()) {
       while (currentWeek.length < 7) {
