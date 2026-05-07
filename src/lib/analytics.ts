@@ -5,11 +5,15 @@ export function getKPIs(trades: Trade[]) {
     return { totalPnl: 0, winRate: 0, totalTrades: 0, bestTrade: 0, worstTrade: 0, avgTradeSize: 0, profitFactor: 0, sharpeRatio: 0, avgRMultiple: 0, avgWin: 0, avgLoss: 0, expectancy: 0, totalFees: 0 };
   }
   const totalPnl = trades.reduce((s, t) => s + t.pnl, 0);
-  const wins = trades.filter((t) => t.pnl > 0);
-  const losses = trades.filter((t) => t.pnl < 0);
-  const winRate = (wins.length / trades.length) * 100;
-  const best = trades.reduce((b, t) => (t.pnl > b.pnl ? t : b), trades[0]);
-  const worst = trades.reduce((w, t) => (t.pnl < w.pnl ? t : w), trades[0]);
+  // Realized trades = closing legs only. BUY trades have pnl=0 and must not
+  // dilute win rate, best/worst, or profit factor.
+  const realized = trades.filter((t) => t.side === "SELL" || t.pnl !== 0);
+  const wins = realized.filter((t) => t.pnl > 0);
+  const losses = realized.filter((t) => t.pnl < 0);
+  const winRate = realized.length > 0 ? (wins.length / realized.length) * 100 : 0;
+  const baseForBestWorst = realized.length > 0 ? realized : trades;
+  const best = baseForBestWorst.reduce((b, t) => (t.pnl > b.pnl ? t : b), baseForBestWorst[0]);
+  const worst = baseForBestWorst.reduce((w, t) => (t.pnl < w.pnl ? t : w), baseForBestWorst[0]);
   const avgSize = trades.reduce((s, t) => s + t.price * t.quantity, 0) / trades.length;
   const grossProfit = wins.reduce((s, t) => s + t.pnl, 0);
   const grossLoss = Math.abs(losses.reduce((s, t) => s + t.pnl, 0));
