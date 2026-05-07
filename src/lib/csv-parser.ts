@@ -111,14 +111,28 @@ export function parseCryptoComCsv(text: string): ParseResult {
     return { trades: [], totalRows: 0, tradingRows: 0, skippedGroups: 0, errors: ["File has fewer than 5 lines — not a valid Crypto.com export."] };
   }
 
-  const headerLine = lines[3];
-  const headers = parseCSVLine(headerLine);
+  // Dynamically locate the header row instead of assuming a fixed position.
+  // Crypto.com exports may include a variable number of preamble lines.
+  let headerIdx = -1;
+  let headers: string[] = [];
+  for (let i = 0; i < Math.min(lines.length, 20); i++) {
+    const candidate = parseCSVLine(lines[i]);
+    if (
+      candidate.includes("Journal Type") &&
+      candidate.includes("Trade Match ID") &&
+      candidate.includes("Instrument")
+    ) {
+      headerIdx = i;
+      headers = candidate;
+      break;
+    }
+  }
 
-  if (!headers.includes("Journal Type") || !headers.includes("Trade Match ID")) {
+  if (headerIdx === -1) {
     return { trades: [], totalRows: 0, tradingRows: 0, skippedGroups: 0, errors: ["Header row missing expected columns. Ensure this is an OEX_TRANSACTION.csv export."] };
   }
 
-  const dataLines = lines.slice(4);
+  const dataLines = lines.slice(headerIdx + 1);
   let parseErrors = 0;
 
   const rows: RawRow[] = [];
